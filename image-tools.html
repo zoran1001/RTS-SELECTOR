@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Tools v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:      #080808;
+  --black-2:    #111111;
+  --black-3:    #1a1a1a;
+  --black-4:    #222222;
+  --black-5:    #2c2c2c;
+  --red:        #e63946;
+  --red-dim:    rgba(230,57,70,.12);
+  --red-mid:    rgba(230,57,70,.25);
+  --red-bright: #ff4d5a;
+  --white:      #f5f5f5;
+  --white-2:    #c8c8c8;
+  --white-3:    #888888;
+  --white-4:    #444444;
+  --border:     rgba(255,255,255,.08);
+  --border-red: rgba(230,57,70,.3);
+  --font-ui:    'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Consolas', monospace;
+  --radius-sm:  6px;
+  --radius:     10px;
+  --radius-lg:  14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  min-height: 100vh;
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--white-4); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--white-3); }
+
+.header {
+  height: 56px;
+  background: var(--black-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--red);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-icon svg { width: 16px; height: 16px; fill: white; }
+.header-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--white);
+}
+.header-title span { color: var(--red); }
+.header-version {
+  font-size: 11px;
+  color: var(--white-3);
+  background: var(--black-3);
+  border: 1px solid var(--border);
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+.header-notice {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--white-4);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.header-notice::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+}
+
+.lang-btn {
+  background: var(--black-3);
+  border: 1px solid var(--border);
+  color: var(--white-2);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-btn:hover {
+  background: var(--black-4);
+  border-color: var(--white-4);
+  color: var(--white);
+}
+
+.tab-bar {
+  background: var(--black-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  padding: 0 28px;
+  gap: 0;
+}
+.tab-btn {
+  padding: 14px 22px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  color: var(--white-3);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color .2s, border-color .2s;
+  letter-spacing: -0.1px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.tab-btn svg { width: 14px; height: 14px; opacity: .7; }
+.tab-btn:hover { color: var(--white); }
+.tab-btn.active {
+  color: var(--white);
+  border-bottom-color: var(--red);
+}
+.tab-btn.active svg { opacity: 1; }
+
+.tab-content { display: none; padding: 24px 28px; }
+.tab-content.active { display: block; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+@media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--black-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+.card + .card { margin-top: 16px; }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--white-3);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 12px;
+  background: var(--red);
+  border-radius: 2px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid var(--border-red);
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--white-3);
+  margin-bottom: 5px;
+  letter-spacing: .2px;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  width: 100%;
+  background: var(--black-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 11px;
+  color: var(--white);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  transition: border-color .2s;
+  appearance: none;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--red);
+}
+input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--red);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--black-3);
+  color: var(--white-2);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.btn:hover {
+  background: var(--black-4);
+  border-color: rgba(255,255,255,.18);
+}
+.btn-text {
+  display: inline;
+}
+  color: var(--white);
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+
+.placeholder-text {
+  display: block;
+  margin-top: 8px;
+  color: var(--white-3);
+}
+.btn-primary {
+  background: var(--red);
+  border-color: var(--red);
+  color: white;
+  font-weight: 600;
+}
+.btn-primary:hover { background: var(--red-bright); border-color: var(--red-bright); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-danger {
+  background: var(--red-dim);
+  border-color: var(--border-red);
+  color: var(--red);
+}
+.btn-danger:hover {
+  background: rgba(230,57,70,.22);
+  border-color: var(--red);
+}
+.btn-success {
+  background: rgba(34,197,94,.15);
+  border-color: rgba(34,197,94,.3);
+  color: #4ade80;
+}
+.btn-success:hover {
+  background: rgba(34,197,94,.25);
+  border-color: rgba(34,197,94,.5);
+}
+
+.drop-zone {
+  border: 1.5px dashed var(--white-4);
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  background: var(--black-3);
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--red);
+  background: var(--red-dim);
+}
+.drop-zone.drag-over { border-style: solid; }
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.dz-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--black-4);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dz-icon svg { width: 18px; height: 18px; color: var(--white-3); }
+.drop-zone:hover .dz-icon, .drop-zone.drag-over .dz-icon {
+  background: var(--red-dim);
+  border-color: var(--border-red);
+}
+.drop-zone:hover .dz-icon svg, .drop-zone.drag-over .dz-icon svg { color: var(--red); }
+.dz-text { font-size: 12px; font-weight: 600; color: var(--white-2); }
+.dz-sub { font-size: 11px; color: var(--white-3); }
+
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.file-table th {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--white-4);
+  padding: 7px 12px;
+  background: var(--black-3);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.file-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-table tr:hover td { background: rgba(255,255,255,.03); }
+.file-table tr.selected td { background: var(--red-dim); }
+.file-table .thumb-sm {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: repeating-conic-gradient(#1c1c1c 0% 25%, #141414 0% 50%) 0 0 / 8px 8px;
+  display: block;
+}
+.file-table select { width: 80px; padding: 4px 8px; font-size: 11px; }
+.table-wrap {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.thumb-item {
+  position: relative;
+  background: var(--black-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.thumb-item:hover { border-color: var(--red); }
+.thumb-item img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  display: block;
+  background: repeating-conic-gradient(#1c1c1c 0% 25%, #141414 0% 50%) 0 0 / 10px 10px;
+  border-radius: 3px;
+}
+.thumb-name {
+  font-size: 9.5px;
+  color: var(--white-3);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.thumb-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: rgba(0,0,0,.7);
+  border: 1px solid var(--red);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 9px;
+  color: var(--red);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.thumb-item:hover .thumb-remove { display: flex; }
+
+.progress-area { margin-top: 14px; }
+.progress-bar-outer {
+  background: var(--black-3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  height: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.progress-bar-inner {
+  height: 100%;
+  background: var(--red);
+  border-radius: 3px;
+  transition: width .3s;
+  width: 0%;
+}
+.progress-text { font-size: 11px; color: var(--white-3); font-family: var(--font-mono); }
+
+.log-area {
+  background: var(--black);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--white-3);
+  max-height: 130px;
+  overflow-y: auto;
+  line-height: 1.8;
+  margin-top: 10px;
+}
+.log-line.ok  { color: #4ade80; }
+.log-line.warn { color: #fbbf24; }
+.log-line.err  { color: var(--red); }
+
+.preview-wrap {
+  background: repeating-conic-gradient(#141414 0% 25%, #0e0e0e 0% 50%) 0 0 / 16px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  position: relative;
+}
+.preview-wrap canvas { max-width: 100%; max-height: 420px; display: block; }
+.preview-placeholder {
+  color: var(--white-4);
+  font-size: 12px;
+  text-align: center;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.preview-placeholder svg { width: 32px; height: 32px; opacity: .3; }
+
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flex { display: flex; gap: 8px; align-items: center; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-8  { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-14 { margin-top: 14px; }
+.mt-16 { margin-top: 16px; }
+.w-full { width: 100%; }
+.text-muted { color: var(--white-3); font-size: 11px; }
+.text-mono { font-family: var(--font-mono); }
+
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.input-group input[type="text"] { flex: 1; }
+
+.path-display {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--white-3);
+  background: var(--black-3);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-logo">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="13" width="8" height="8" rx="1.5" opacity=".5"/>
+      </svg>
+    </div>
+    <span class="header-title">Image<span>Tools</span></span>
+  </div>
+  <span class="header-version">v2.0</span>
+  <span class="header-notice">本地处理 · 文件不上传服务器</span>
+  <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('preprocess', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+    </svg>
+    <span id="tab-preprocess-text">预处理工具</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('compose', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+    </svg>
+    <span id="tab-compose-text">合成工具</span>
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  Tab 1 — 预处理工具                            -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-preprocess" class="tab-content active">
+  <div class="grid-2" style="align-items:start">
+    <div>
+      <div class="card">
+        <div class="section-head">
+          <span class="section-title" id="pp-import-label">导入图片</span>
+          <span class="badge" id="pp-count">0 张</span>
+        </div>
+        <div class="drop-zone" id="pp-prod-drop" ondragover="dzDragover(event,this)" ondragleave="dzDragleave(this)" ondrop="ppDrop(event)">
+          <input type="file" id="pp-file-input" accept="image/*" multiple onchange="ppFilesSelected(this.files)">
+          <div class="dz-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="dz-text">拖拽图片到这里</div>
+          <div class="dz-sub">PNG · JPG · WEBP · BMP — 支持批量</div>
+        </div>
+        <div class="flex mt-12" style="gap:8px">
+          <button class="btn btn-danger" id="pp-clear-btn" onclick="ppClearAll()">清除</button>
+        </div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="section-head">
+          <span class="section-title" id="pp-files-label">文件列表</span>
+        </div>
+        <div class="table-wrap">
+          <table class="file-table" id="pp-table">
+            <colgroup>
+              <col style="width:48px">
+              <col>
+              <col style="width:90px">
+              <col style="width:38px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th></th>
+                <th>文件名</th>
+                <th>级别</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="pp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="section-head">
+          <span class="section-title" id="pp-preview-label">实时预览</span>
+          <span class="text-muted" id="pp-preview-hint">点击列表行预览</span>
+        </div>
+        <div class="preview-wrap" id="pp-preview-wrap">
+          <div class="preview-placeholder" id="pp-preview-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span class="placeholder-text">导入文件后点击行预览效果</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-14">
+    <div class="action-bar">
+      <div class="flex" style="gap:10px">
+        <button class="btn btn-primary" id="pp-run-btn" onclick="ppRunBatch()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span class="btn-text">批量处理</span>
+        </button>
+        <button class="btn" id="pp-select-dir-btn" onclick="selectDownloadDirectory()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span class="btn-text">选择输出目录</span>
+        </button>
+        <button class="btn btn-success" id="pp-download-btn" onclick="ppDownloadAll()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="btn-text">下载全部</span>
+        </button>
+        <button class="btn" id="pp-preview-btn" onclick="ppPreviewCurrent()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="btn-text">预览当前</span>
+        </button>
+      </div>
+      <span class="text-muted text-mono" id="pp-download-dir-display">请先选择输出目录</span>
+    </div>
+    <div class="progress-area">
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="pp-progress-bar"></div></div>
+      <div class="progress-text" id="pp-progress-text"></div>
+    </div>
+    <div class="log-area" id="pp-log"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  Tab 2 — 合成工具                              -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-compose" class="tab-content">
+  <div class="grid-2" style="align-items:start">
+    <div>
+      <div class="card">
+        <div class="section-head">
+          <span class="section-title" id="cp-prod-label">产品图</span>
+          <span class="badge" id="cp-prod-count">0 张</span>
+        </div>
+        <div class="drop-zone" id="cp-prod-drop" ondragover="dzDragover(event,this)" ondragleave="dzDragleave(this)" ondrop="cpDropProducts(event)">
+          <input type="file" id="cp-prod-input" accept="image/*" multiple onchange="cpLoadProductsAndRebuild(this.files)">
+          <div class="dz-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+            </svg>
+          </div>
+          <div class="dz-text">拖拽产品图到这里</div>
+          <div class="dz-sub">支持批量拖入</div>
+        </div>
+        <div class="flex mt-10" style="gap:8px">
+          <button class="btn btn-danger" id="cp-clear-prod-btn" onclick="cpClearProducts()">清除</button>
+        </div>
+        <div class="thumb-grid mt-10" id="cp-prod-thumbs"></div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="section-head">
+          <span class="section-title" id="cp-bg-label">背景图</span>
+          <span class="badge" id="cp-bg-count">0 张</span>
+        </div>
+        <div class="drop-zone" id="cp-bg-drop" ondragover="dzDragover(event,this)" ondragleave="dzDragleave(this)" ondrop="cpDropBgs(event)">
+          <input type="file" id="cp-bg-input" accept="image/*" multiple onchange="cpLoadBgsAndRebuild(this.files)">
+          <div class="dz-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div class="dz-text">拖拽背景图到这里</div>
+          <div class="dz-sub">支持批量拖入</div>
+        </div>
+        <div class="flex mt-10" style="gap:8px">
+          <button class="btn btn-danger" id="cp-clear-bg-btn" onclick="cpClearBgs()">清除</button>
+        </div>
+        <div class="thumb-grid mt-10" id="cp-bg-thumbs"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="section-head" style="margin-bottom:16px">
+          <span class="section-title" id="cp-params-label">合成参数</span>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label id="cp-scale-label">产品缩放比例</label>
+            <input type="number" id="cp-scale" value="1.0" min="0.1" max="3.0" step="0.05" onchange="cpPreview()">
+          </div>
+          <div>
+            <label id="cp-format-label">导出格式</label>
+            <select id="cp-format" onchange="cpToggleQuality()">
+              <option value="png" selected id="cp-format-png">PNG（无损）</option>
+              <option value="jpeg" id="cp-format-jpeg">JPEG（有损）</option>
+              <option value="webp" id="cp-format-webp">WEBP（高效）</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-12" id="cp-quality-group" style="display:none">
+          <div class="flex-between" style="margin-bottom:6px">
+            <label id="cp-quality-label" style="margin:0">压缩质量</label>
+            <span class="text-mono text-muted" id="cp-quality-val">95%</span>
+          </div>
+          <input type="range" id="cp-quality" min="50" max="100" value="95"
+            oninput="document.getElementById('cp-quality-val').textContent=this.value+'%'">
+        </div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="section-head" style="margin-bottom:12px">
+          <span class="section-title" id="cp-watermark-label">水印</span>
+          <span class="text-muted text-sm" id="cp-watermark-hint">（自动应用到合成图片最上方，宽1080px）</span>
+        </div>
+        <div class="drop-zone" id="cp-wm-drop" style="padding:16px; min-height:72px"
+          ondragover="dzDragover(event,this)" ondragleave="dzDragleave(this)" ondrop="cpDropWatermark(event)">
+          <input type="file" id="cp-wm-input" accept="image/*" onchange="cpLoadWatermark(this.files[0])">
+          <div class="dz-sub">拖拽水印图片到此</div>
+        </div>
+        <div id="cp-wm-preview" style="display:none; margin-top:10px">
+          <img id="cp-wm-thumb" style="max-height:48px; max-width:100%; object-fit:contain; border-radius:4px" alt="">
+          <button class="btn btn-danger mt-8" id="cp-wm-remove-btn" onclick="cpClearWatermark()">移除水印</button>
+        </div>
+        <div id="cp-wm-placeholder" style="margin-top:10px; text-align:center;">
+          <div class="text-muted text-sm">加载水印后会在合成图片最上面显示（宽1080px）</div>
+        </div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="section-head">
+          <span class="section-title" id="cp-preview-label">预览</span>
+          <div class="flex" style="gap:8px">
+            <select id="cp-prev-prod" style="width:110px; font-size:11px" onchange="cpPreview()"><option>— 产品 —</option></select>
+            <select id="cp-prev-bg"   style="width:110px; font-size:11px" onchange="cpPreview()"><option>— 背景 —</option></select>
+          </div>
+        </div>
+        <div class="preview-wrap mt-8" id="cp-preview-wrap">
+          <div class="preview-placeholder" id="cp-preview-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span class="placeholder-text">上传产品图和背景图后选择预览</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-14">
+    <div class="action-bar">
+      <div class="flex" style="gap:10px">
+        <button class="btn btn-primary" id="cp-run-btn" onclick="cpRunBatch()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span class="btn-text">批量合成</span>
+        </button>
+        <button class="btn" id="cp-select-dir-btn" onclick="selectDownloadDirectory()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span class="btn-text">选择输出目录</span>
+        </button>
+        <button class="btn btn-success" id="cp-download-btn" onclick="cpDownloadAll()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="btn-text">下载全部</span>
+        </button>
+        <span class="text-muted text-mono" id="cp-combo-count"></span>
+      </div>
+      <span class="text-muted text-mono" id="cp-download-dir-display">请先选择输出目录</span>
+    </div>
+    <div class="progress-area">
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="cp-progress-bar"></div></div>
+      <div class="progress-text" id="cp-progress-text"></div>
+    </div>
+    <div class="log-area" id="cp-log"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  Utility
+// ═══════════════════════════════════════════════════════
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function dzDragover(e, el) { e.preventDefault(); el.classList.add('drag-over'); }
+function dzDragleave(el) { el.classList.remove('drag-over'); }
+
+function log(areaId, msg, type = '') {
+  const area = document.getElementById(areaId);
+  const line = document.createElement('div');
+  line.className = 'log-line' + (type ? ' ' + type : '');
+  const now = new Date();
+  const ts = now.toTimeString().slice(0, 8);
+  line.textContent = `[${ts}] ${msg}`;
+  area.appendChild(line);
+  area.scrollTop = area.scrollHeight;
+}
+
+function setProgress(barId, textId, pct, text) {
+  document.getElementById(barId).style.width = pct + '%';
+  if (textId) document.getElementById(textId).textContent = text;
+}
+
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise(resolve => {
+    canvas.toBlob(resolve, 'image/' + type, quality / 100);
+  });
+}
+
+function nameNoExt(filename) {
+  const parts = filename.split('.');
+  if (parts.length > 1) parts.pop();
+  return parts.join('.');
+}
+
+// ═══════════════════════════════════════════════════════
+//  Translation System
+// ═══════════════════════════════════════════════════════
+const translations = {
+  zh: {
+    // Header
+    'title': 'Image Tools',
+    'local_processing': '本地处理 · 文件不上传服务器',
+    // Tabs
+    'preprocess_tool': '预处理工具',
+    'compose_tool': '合成工具',
+    // Common
+    'clear': '清除',
+    'remove': '移除',
+    'loading': '加载中...',
+    'ready': '就绪',
+    'start': '开始',
+    'complete': '完成',
+    'success': '成功',
+    'failed': '失败',
+    'error': '错误',
+    'ok': '确定',
+    // Preprocess
+    'import_images': '导入图片',
+    'file_list': '文件列表',
+    'preview': '预览',
+    'click_to_preview': '点击列表行预览',
+    'no_preview': '暂无预览',
+    'batch_process': '批量处理',
+    'select_output_dir': '选择输出目录',
+    'download_all': '下载全部',
+    'preview_current': '预览当前',
+    'select_output_first': '请先选择输出目录',
+    'output_to': '输出到',
+    'start_processing': '开始处理...',
+    'processing': '处理',
+    'batch_complete': '批量处理完成',
+    'start_download': '开始下载到',
+    'download_complete': '下载完成',
+    'preview_failed': '预览失败',
+    'select_files': '选择文件',
+    'drag_files_here': '拖拽图片文件到这里',
+    'support_batch': '支持批量拖入',
+    // Compose
+    'product_images': '产品图',
+    'background_images': '背景图',
+    'drag_product_here': '拖拽产品图到这里',
+    'drag_background_here': '拖拽背景图到这里',
+    'compose_params': '合成参数',
+    'product_scale': '产品缩放比例',
+    'export_format': '导出格式',
+    'compression_quality': '压缩质量',
+    'watermark': '水印',
+    'watermark_hint': '（自动应用到合成图片最上方，宽1080px）',
+    'drag_watermark_here': '拖拽水印图片到此',
+    'remove_watermark': '移除水印',
+    'watermark_loaded_hint': '加载水印后会在合成图片最上面显示（宽1080px）',
+    'select_product': '— 产品 —',
+    'select_background': '— 背景 —',
+    'upload_to_preview': '上传产品图和背景图后选择预览',
+    'batch_compose': '批量合成',
+    'composing': '合成',
+    'compose_failed': '合成失败',
+    'compose_complete': '批量合成完成',
+    'combo_count': '组合数',
+    'images': '张',
+    // Status
+    'dir_selected': '已选择输出目录',
+    'dir_select_failed': '选择目录失败',
+  },
+  en: {
+    // Header
+    'title': 'Image Tools',
+    'local_processing': 'Local Processing · Files stay on your device',
+    // Tabs
+    'preprocess_tool': 'Preprocess Tool',
+    'compose_tool': 'Compose Tool',
+    // Common
+    'clear': 'Clear',
+    'remove': 'Remove',
+    'loading': 'Loading...',
+    'ready': 'Ready',
+    'start': 'Start',
+    'complete': 'Complete',
+    'success': 'Success',
+    'failed': 'Failed',
+    'error': 'Error',
+    'ok': 'OK',
+    // Preprocess
+    'import_images': 'Import Images',
+    'file_list': 'File List',
+    'preview': 'Preview',
+    'click_to_preview': 'Click list item to preview',
+    'no_preview': 'No preview available',
+    'batch_process': 'Batch Process',
+    'select_output_dir': 'Select Output Directory',
+    'download_all': 'Download All',
+    'preview_current': 'Preview Current',
+    'select_output_first': 'Please select output directory first',
+    'output_to': 'Output to',
+    'start_processing': 'Starting process...',
+    'processing': 'Processing',
+    'batch_complete': 'Batch processing complete',
+    'start_download': 'Starting download to',
+    'download_complete': 'Download complete',
+    'preview_failed': 'Preview failed',
+    'select_files': 'Select Files',
+    'drag_files_here': 'Drag images here',
+    'support_batch': 'Batch drag supported',
+    // Compose
+    'product_images': 'Product Images',
+    'background_images': 'Background Images',
+    'drag_product_here': 'Drag product images here',
+    'drag_background_here': 'Drag background images here',
+    'compose_params': 'Compose Parameters',
+    'product_scale': 'Product Scale',
+    'export_format': 'Export Format',
+    'format_png': 'PNG (Lossless)',
+    'format_jpeg': 'JPEG (Lossy)',
+    'format_webp': 'WEBP (Efficient)',
+    'compression_quality': 'Compression Quality',
+    'watermark': 'Watermark',
+    'watermark_hint': '(Auto applied to top of composed image, 1080px wide)',
+    'drag_watermark_here': 'Drag watermark image here',
+    'remove_watermark': 'Remove Watermark',
+    'watermark_loaded_hint': 'Watermark will appear at top of composed image (1080px wide)',
+    'select_product': '— Product —',
+    'select_background': '— Background —',
+    'upload_to_preview': 'Upload product and background images to preview',
+    'batch_compose': 'Batch Compose',
+    'composing': 'Composing',
+    'compose_failed': 'Compose failed',
+    'compose_complete': 'Batch compose complete',
+    'combo_count': 'combos',
+    'images': 'images',
+    // Status
+    'dir_selected': 'Output directory selected',
+    'dir_select_failed': 'Failed to select directory',
+  }
+};
+
+let currentLang = localStorage.getItem('tool_language') || 'zh';
+
+function t(key) {
+  return translations[currentLang][key] || translations.zh[key] || key;
+}
+
+function switchLanguage() {
+  currentLang = currentLang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('tool_language', currentLang);
+  applyTranslations();
+}
+
+function applyTranslations() {
+  // Update language toggle button
+  const langBtn = document.getElementById('lang-toggle');
+  if (langBtn) {
+    langBtn.textContent = currentLang === 'zh' ? 'EN' : '中文';
+  }
+  
+  // Header
+  document.querySelector('.header-notice').textContent = t('local_processing');
+  
+  // Tab buttons
+  setText('#tab-preprocess-text', t('preprocess_tool'));
+  setText('#tab-compose-text', t('compose_tool'));
+  
+  // Preprocess tab
+  setText('#pp-import-label', t('import_images'));
+  setText('#pp-files-label', t('file_list'));
+  setText('#pp-preview-label', t('preview'));
+  setText('#pp-preview-hint', t('click_to_preview'));
+  setText('#pp-preview-placeholder .placeholder-text', t('no_preview'));
+  setText('#pp-run-btn .btn-text', t('batch_process'));
+  setText('#pp-select-dir-btn .btn-text', t('select_output_dir'));
+  setText('#pp-download-btn .btn-text', t('download_all'));
+  setText('#pp-preview-btn', t('preview_current'));
+  setText('#pp-download-dir-display', currentLang === 'zh' ? '请先选择输出目录' : 'Please select output directory');
+  setText('#pp-prod-drop .dz-text', t('select_files'));
+  setText('#pp-prod-drop .dz-sub', t('drag_files_here'));
+  setText('#pp-clear-btn', t('clear'));
+  setText('#cp-clear-prod-btn', t('clear'));
+  setText('#cp-clear-bg-btn', t('clear'));
+  
+  // Compose tab
+  setText('#cp-prod-label', t('product_images'));
+  setText('#cp-bg-label', t('background_images'));
+  setText('#cp-prod-drop .dz-text', t('select_files'));
+  setText('#cp-prod-drop .dz-sub', t('drag_product_here'));
+  setText('#cp-bg-drop .dz-text', t('select_files'));
+  setText('#cp-bg-drop .dz-sub', t('drag_background_here'));
+  setText('#cp-params-label', t('compose_params'));
+  setText('#cp-scale-label', t('product_scale'));
+  setText('#cp-format-label', t('export_format'));
+  setText('#cp-format-png', t('format_png'));
+  setText('#cp-format-jpeg', t('format_jpeg'));
+  setText('#cp-format-webp', t('format_webp'));
+  setText('#cp-quality-label', t('compression_quality'));
+  setText('#cp-watermark-label', t('watermark'));
+  setText('#cp-watermark-hint', t('watermark_hint'));
+  setText('#cp-wm-drop .dz-sub', t('drag_watermark_here'));
+  setText('#cp-wm-placeholder', t('watermark_loaded_hint'));
+  setText('#cp-wm-remove-btn', t('remove_watermark'));
+  setText('#cp-preview-label', t('preview'));
+  setText('#cp-preview-placeholder .placeholder-text', t('upload_to_preview'));
+  setText('#cp-run-btn .btn-text', t('batch_compose'));
+  setText('#cp-select-dir-btn .btn-text', t('select_output_dir'));
+  setText('#cp-download-btn .btn-text', t('download_all'));
+  setText('#cp-download-dir-display', currentLang === 'zh' ? '请先选择输出目录' : 'Please select output directory');
+  
+  // Select options
+  setText('#cp-prev-prod option', t('select_product'));
+  setText('#cp-prev-bg option', t('select_background'));
+}
+
+function setText(selector, text) {
+  const el = document.querySelector(selector);
+  if (el) el.textContent = text;
+}
+
+function selectFolder(inputId) {
+  const input = document.getElementById(inputId);
+  const path = prompt('请输入文件夹路径：', input.value || '');
+  if (path) {
+    input.value = path;
+    document.getElementById(inputId.replace('input', 'display') || inputId + '-display').textContent = path;
+  }
+}
+
+window.addEventListener('load', () => {
+  // 应用翻译
+  applyTranslations();
+  // 自动恢复保存的水印
+  cpLoadSavedWatermark();
+});
+
+// ═══════════════════════════════════════════════════════
+//  Download Directory
+// ═══════════════════════════════════════════════════════
+let downloadDirHandle = null;
+let downloadDirName = '';
+
+async function selectDownloadDirectory() {
+  try {
+    downloadDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    downloadDirName = downloadDirHandle.name;
+    document.getElementById('pp-download-dir-display').textContent = `输出到: ${downloadDirName}`;
+    document.getElementById('pp-download-dir-display').style.color = 'var(--green)';
+    document.getElementById('cp-download-dir-display').textContent = `输出到: ${downloadDirName}`;
+    document.getElementById('cp-download-dir-display').style.color = 'var(--green)';
+    document.getElementById('pp-download-btn').disabled = ppResults.length === 0;
+    document.getElementById('cp-download-btn').disabled = cpResults.length === 0;
+    log('pp-log', `已选择输出目录: ${downloadDirName}`, 'ok');
+    log('cp-log', `已选择输出目录: ${downloadDirName}`, 'ok');
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error('选择目录失败:', err);
+      log('pp-log', '选择目录失败', 'err');
+      log('cp-log', '选择目录失败', 'err');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  Preprocess — State
+// ═══════════════════════════════════════════════════════
+const ppFiles = [];
+let ppSelectedIdx = -1;
+let ppRunning = false;
+let ppResults = [];
+
+const PP_LEVEL_TOP = { 1: 300, 2: 244.73, 3: 210, 4: 149.76, 5: 103.93 };
+const PP_BOTTOM_MARGIN = 100;
+const PP_ALPHA_THRESHOLD = 128;
+const PP_WHITE_THRESHOLD = 240;
+
+// ═══════════════════════════════════════════════════════
+//  Preprocess — UI
+// ═══════════════════════════════════════════════════════
+
+function ppUpdateCount() {
+  document.getElementById('pp-count').textContent = ppFiles.length + ' 张';
+  const hasFiles = ppFiles.length > 0;
+  const hasResults = ppResults.length > 0;
+  document.getElementById('pp-run-btn').disabled = !hasFiles || ppRunning;
+  document.getElementById('pp-download-btn').disabled = !hasResults;
+  document.getElementById('pp-preview-btn').disabled = ppSelectedIdx < 0;
+}
+
+function ppAddFiles(files) {
+  console.log('ppAddFiles called with files:', files);
+  const tasks = Array.from(files).map(async f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    console.log('Processing file:', f.name, 'Extension:', ext);
+    if (!['png','jpg','jpeg','webp','bmp','tiff','tif'].includes(ext)) {
+      console.log('Skipping file:', f.name, 'Unsupported extension');
+      return;
+    }
+    try {
+      const dataURL = await fileToDataURL(f);
+      const defaultLevel = 3;
+      ppFiles.push({ file: f, dataURL, name: f.name, level: defaultLevel });
+      console.log('File added:', f.name);
+    } catch (error) {
+      console.error('Error processing file:', f.name, error);
+    }
+  });
+  Promise.all(tasks).then(() => {
+    console.log('All files processed, total files:', ppFiles.length);
+    ppRebuildTable();
+    ppUpdateCount();
+    if (ppFiles.length > 0 && ppSelectedIdx < 0) {
+      ppSelectRow(0);
+    }
+  });
+}
+
+function ppRebuildTable() {
+  const tbody = document.getElementById('pp-tbody');
+  tbody.innerHTML = '';
+  ppFiles.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+    if (idx === ppSelectedIdx) tr.classList.add('selected');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => ppSelectRow(idx);
+
+    const tdThumb = document.createElement('td');
+    const img = document.createElement('img');
+    img.src = item.dataURL;
+    img.className = 'thumb-sm';
+    tdThumb.appendChild(img);
+
+    const tdName = document.createElement('td');
+    tdName.textContent = item.name;
+    tdName.title = item.name;
+
+    const tdLevel = document.createElement('td');
+    const sel = document.createElement('select');
+    [1,2,3,4,5].forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l; opt.textContent = 'Level ' + l;
+      if (l === item.level) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = e => {
+      e.stopPropagation();
+      ppFiles[idx].level = parseInt(sel.value);
+      if (idx === ppSelectedIdx) ppPreviewCurrent();
+    };
+    sel.onclick = e => e.stopPropagation();
+    tdLevel.appendChild(sel);
+
+    const tdDel = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-danger';
+    btn.style.cssText = 'padding:3px 8px; font-size:11px';
+    btn.textContent = '✕';
+    btn.onclick = e => { e.stopPropagation(); ppRemoveRow(idx); };
+    tdDel.appendChild(btn);
+
+    tr.appendChild(tdThumb);
+    tr.appendChild(tdName);
+    tr.appendChild(tdLevel);
+    tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+  });
+}
+
+function ppSelectRow(idx) {
+  ppSelectedIdx = idx;
+  ppRebuildTable();
+  ppPreviewCurrent();
+  document.getElementById('pp-preview-btn').disabled = false;
+}
+
+function ppRemoveRow(idx) {
+  ppFiles.splice(idx, 1);
+  if (ppSelectedIdx >= ppFiles.length) ppSelectedIdx = ppFiles.length - 1;
+  ppRebuildTable();
+  ppUpdateCount();
+  if (ppSelectedIdx >= 0) ppPreviewCurrent(); else clearPreview('pp');
+}
+
+function ppClearAll() {
+  ppFiles.length = 0;
+  ppSelectedIdx = -1;
+  ppResults = [];
+  document.getElementById('pp-tbody').innerHTML = '';
+  ppUpdateCount();
+  clearPreview('pp');
+  document.getElementById('pp-log').innerHTML = '';
+}
+
+function clearPreview(prefix) {
+  const wrap = document.getElementById(prefix + '-preview-wrap');
+  wrap.innerHTML = '<div class="preview-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>暂无预览</div>';
+}
+
+function ppDrop(e) {
+  e.preventDefault();
+  document.getElementById('pp-drop').classList.remove('drag-over');
+  ppAddFiles(e.dataTransfer.files);
+}
+function ppFilesSelected(files) { ppAddFiles(files); }
+
+// ═══════════════════════════════════════════════════════
+//  Preprocess — Canvas Processing
+// ═══════════════════════════════════════════════════════
+
+function isTransparentOrWhite(r, g, b, a) {
+  if (a < PP_ALPHA_THRESHOLD) return true;
+  return r >= PP_WHITE_THRESHOLD && g >= PP_WHITE_THRESHOLD && b >= PP_WHITE_THRESHOLD;
+}
+
+function trimEdges(ctx, w, h) {
+  const data = ctx.getImageData(0, 0, w, h).data;
+  function px(x, y) { const i = (y * w + x) * 4; return [data[i], data[i+1], data[i+2], data[i+3]]; }
+  function rowEmpty(y) { for(let x=0;x<w;x++){ const [r,g,b,a]=px(x,y); if(!isTransparentOrWhite(r,g,b,a)) return false; } return true; }
+  function colEmpty(x) { for(let y=0;y<h;y++){ const [r,g,b,a]=px(x,y); if(!isTransparentOrWhite(r,g,b,a)) return false; } return true; }
+
+  let top=0, bottom=h-1, left=0, right=w-1;
+  while(top < h && rowEmpty(top)) top++;
+  while(bottom > top && rowEmpty(bottom)) bottom--;
+  while(left < w && colEmpty(left)) left++;
+  while(right > left && colEmpty(right)) right--;
+
+  return { top, bottom: bottom+1, left, right: right+1 };
+}
+
+async function preprocessOneV2(item) {
+  const canvasSize = 1080;
+  const trimEnabled = true;
+
+  const srcImg = await loadImage(item.dataURL);
+
+  const tmpC = document.createElement('canvas');
+  tmpC.width = srcImg.naturalWidth;
+  tmpC.height = srcImg.naturalHeight;
+  const tmpCtx = tmpC.getContext('2d');
+  tmpCtx.drawImage(srcImg, 0, 0);
+
+  let cropBox = { top: 0, bottom: tmpC.height, left: 0, right: tmpC.width };
+  if (trimEnabled) {
+    cropBox = trimEdges(tmpCtx, tmpC.width, tmpC.height);
+  }
+  const cropW = cropBox.right - cropBox.left;
+  const cropH = cropBox.bottom - cropBox.top;
+  if (cropW <= 0 || cropH <= 0) throw new Error('裁边后图像为空');
+
+  const topMargin = PP_LEVEL_TOP[item.level] || PP_LEVEL_TOP[3];
+  const usableH = canvasSize - topMargin - PP_BOTTOM_MARGIN;
+  let scale = Math.min(canvasSize / cropW, usableH / cropH);
+  if (scale > 1.0) scale = 1.0;
+  const newW = Math.max(1, Math.round(cropW * scale));
+  const newH = Math.max(1, Math.round(cropH * scale));
+
+  const prodC = document.createElement('canvas');
+  prodC.width = newW;
+  prodC.height = newH;
+  prodC.getContext('2d').drawImage(tmpC,
+    cropBox.left, cropBox.top, cropW, cropH,
+    0, 0, newW, newH);
+
+  const offsetX = Math.round((canvasSize - newW) / 2);
+  const offsetY = Math.round(topMargin);
+
+  const out = document.createElement('canvas');
+  out.width = canvasSize;
+  out.height = canvasSize;
+  const ctx = out.getContext('2d');
+  
+  ctx.drawImage(prodC, offsetX, offsetY);
+  
+  return { canvas: out, name: item.name };
+}
+
+async function ppRunBatch() {
+  if (ppRunning || ppFiles.length === 0) return;
+  
+  ppRunning = true;
+  ppResults = [];
+  document.getElementById('pp-run-btn').disabled = true;
+  document.getElementById('pp-log').innerHTML = '';
+  setProgress('pp-progress-bar', 'pp-progress-text', 0, '开始处理...');
+  
+  const total = ppFiles.length;
+  let success = 0;
+  
+  for (let i = 0; i < total; i++) {
+    const item = ppFiles[i];
+    try {
+      log('pp-log', `处理: ${item.name}`);
+      const result = await preprocessOneV2(item);
+      ppResults.push({ ...result, index: i });
+      success++;
+    } catch (e) {
+      log('pp-log', `失败: ${item.name} - ${e.message}`, 'err');
+    }
+    const pct = ((i + 1) / total) * 100;
+    setProgress('pp-progress-bar', 'pp-progress-text', pct, `${i + 1}/${total}`);
+  }
+  
+  ppRunning = false;
+  setProgress('pp-progress-bar', 'pp-progress-text', 100, `完成: ${success}/${total}`);
+  log('pp-log', `批量处理完成，成功 ${success} 张，失败 ${total - success} 张`, success === total ? 'ok' : 'warn');
+  ppUpdateCount();
+}
+
+async function ppDownloadAll() {
+  if (ppResults.length === 0) return;
+  
+  if (!downloadDirHandle) {
+    log('pp-log', '请先选择输出目录', 'err');
+    return;
+  }
+  
+  log('pp-log', `开始下载到: ${downloadDirName}...`);
+  
+  const format = 'png';
+  const quality = 95;
+  let successCount = 0;
+  
+  for (let i = 0; i < ppResults.length; i++) {
+    const result = ppResults[i];
+    try {
+      const blob = await canvasToBlob(result.canvas, format, quality);
+      const ext = format === 'jpeg' ? 'jpg' : format;
+      const baseName = nameNoExt(result.name);
+      const fileName = `${baseName}_processed.${ext}`;
+      
+      // 使用 File System Access API 保存到选定目录
+      const fileHandle = await downloadDirHandle.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      
+      successCount++;
+      log('pp-log', `保存: ${fileName}`, 'ok');
+    } catch (e) {
+      log('pp-log', `保存失败: ${result.name} - ${e.message}`, 'err');
+    }
+  }
+  
+  log('pp-log', `下载完成: ${successCount}/${ppResults.length} 张`, 'ok');
+}
+async function ppPreviewCurrent() {
+  if (ppSelectedIdx < 0 || ppSelectedIdx >= ppFiles.length) return;
+  
+  const item = ppFiles[ppSelectedIdx];
+  try {
+    const result = await preprocessOneV2(item);
+    const wrap = document.getElementById('pp-preview-wrap');
+    wrap.innerHTML = '';
+    wrap.appendChild(result.canvas);
+  } catch (e) {
+    log('pp-log', `预览失败: ${e.message}`, 'err');
+    clearPreview('pp');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  Compose — State
+// ═══════════════════════════════════════════════════════
+
+let cpProducts = [];
+let cpBgs = [];
+let cpWatermark = null;
+let cpResults = [];
+let cpRunning = false;
+
+// ═══════════════════════════════════════════════════════
+//  Compose — UI Functions
+// ═══════════════════════════════════════════════════════
+
+function cpLoadProductsAndRebuild(files) {
+  const tasks = Array.from(files).map(async f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    if (!['png','jpg','jpeg','webp','bmp','tiff','tif'].includes(ext)) return;
+    const dataURL = await fileToDataURL(f);
+    cpProducts.push({ file: f, dataURL, name: f.name });
+  });
+  Promise.all(tasks).then(() => {
+    cpRebuildProductThumbs();
+    cpUpdateComboCount();
+    cpUpdateButtons();
+  });
+}
+
+function cpDropProducts(event) {
+  dzDragleave(event.target);
+  cpLoadProductsAndRebuild(event.dataTransfer.files);
+}
+
+function cpClearProducts() {
+  cpProducts = [];
+  cpRebuildProductThumbs();
+  cpUpdateComboCount();
+  cpUpdateButtons();
+  clearPreview('cp');
+}
+
+function cpLoadBgsAndRebuild(files) {
+  const tasks = Array.from(files).map(async f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    if (!['png','jpg','jpeg','webp','bmp','tiff','tif'].includes(ext)) return;
+    const dataURL = await fileToDataURL(f);
+    cpBgs.push({ file: f, dataURL, name: f.name });
+  });
+  Promise.all(tasks).then(() => {
+    cpRebuildBgThumbs();
+    cpUpdateComboCount();
+    cpUpdateButtons();
+  });
+}
+
+function cpDropBgs(event) {
+  dzDragleave(event.target);
+  cpLoadBgsAndRebuild(event.dataTransfer.files);
+}
+
+function cpClearBgs() {
+  cpBgs = [];
+  cpRebuildBgThumbs();
+  cpUpdateComboCount();
+  cpUpdateButtons();
+  clearPreview('cp');
+}
+
+function cpRebuildProductThumbs() {
+  const container = document.getElementById('cp-prod-thumbs');
+  container.innerHTML = cpProducts.map((p, i) => `
+    <div class="thumb-item" data-index="${i}" onclick="cpSelectProduct(${i})">
+      <img src="${p.dataURL}" alt="${p.name}">
+      <span class="thumb-name">${p.name}</span>
+    </div>
+  `).join('');
+  document.getElementById('cp-prod-count').textContent = cpProducts.length + ' 张';
+  
+  const sel = document.getElementById('cp-prev-prod');
+  sel.innerHTML = '<option>— 产品 —</option>' + 
+    cpProducts.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+}
+
+function cpRebuildBgThumbs() {
+  const container = document.getElementById('cp-bg-thumbs');
+  container.innerHTML = cpBgs.map((b, i) => `
+    <div class="thumb-item" data-index="${i}" onclick="cpSelectBg(${i})">
+      <img src="${b.dataURL}" alt="${b.name}">
+      <span class="thumb-name">${b.name}</span>
+    </div>
+  `).join('');
+  document.getElementById('cp-bg-count').textContent = cpBgs.length + ' 张';
+  
+  const sel = document.getElementById('cp-prev-bg');
+  sel.innerHTML = '<option>— 背景 —</option>' + 
+    cpBgs.map((b, i) => `<option value="${i}">${b.name}</option>`).join('');
+}
+
+function cpSelectProduct(idx) {
+  document.getElementById('cp-prev-prod').value = idx;
+  cpPreview();
+}
+
+function cpSelectBg(idx) {
+  document.getElementById('cp-prev-bg').value = idx;
+  cpPreview();
+}
+
+function cpUpdateComboCount() {
+  const count = cpProducts.length * cpBgs.length;
+  document.getElementById('cp-combo-count').textContent = `共 ${count} 种组合`;
+}
+
+function cpUpdateButtons() {
+  const hasData = cpProducts.length > 0 && cpBgs.length > 0;
+  document.getElementById('cp-run-btn').disabled = !hasData || cpRunning;
+  document.getElementById('cp-download-btn').disabled = cpResults.length === 0;
+}
+
+function cpToggleQuality() {
+  const format = document.getElementById('cp-format').value;
+  document.getElementById('cp-quality-group').style.display = 
+    (format === 'jpeg' || format === 'webp') ? 'block' : 'none';
+}
+
+const WM_STORAGE_KEY = 'watermark_data';
+
+function cpLoadWatermark(file) {
+  if (!file) return;
+  fileToDataURL(file).then(dataURL => {
+    cpWatermark = { file, dataURL, name: file.name };
+    // 自动保存到 localStorage
+    localStorage.setItem(WM_STORAGE_KEY, JSON.stringify({
+      name: file.name,
+      dataURL: dataURL
+    }));
+    document.getElementById('cp-wm-thumb').src = dataURL;
+    document.getElementById('cp-wm-preview').style.display = 'block';
+    document.getElementById('cp-wm-placeholder').style.display = 'none';
+    cpPreview();
+  });
+}
+
+function cpDropWatermark(event) {
+  dzDragleave(event.target);
+  cpLoadWatermark(event.dataTransfer.files[0]);
+}
+
+function cpClearWatermark() {
+  cpWatermark = null;
+  localStorage.removeItem(WM_STORAGE_KEY);
+  document.getElementById('cp-wm-thumb').src = '';
+  document.getElementById('cp-wm-preview').style.display = 'none';
+  document.getElementById('cp-wm-placeholder').style.display = 'block';
+  cpPreview();
+}
+
+// 页面加载时自动恢复水印
+function cpLoadSavedWatermark() {
+  const saved = localStorage.getItem(WM_STORAGE_KEY);
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      cpWatermark = { name: data.name, dataURL: data.dataURL, file: null };
+      document.getElementById('cp-wm-thumb').src = data.dataURL;
+      document.getElementById('cp-wm-preview').style.display = 'block';
+      document.getElementById('cp-wm-placeholder').style.display = 'none';
+    } catch (e) {
+      console.error('恢复水印失败:', e);
+    }
+  }
+}
+
+async function cpPreview() {
+  const prodIdx = parseInt(document.getElementById('cp-prev-prod').value);
+  const bgIdx = parseInt(document.getElementById('cp-prev-bg').value);
+  
+  if (isNaN(prodIdx) || isNaN(bgIdx)) {
+    clearPreview('cp');
+    return;
+  }
+  
+  const product = cpProducts[prodIdx];
+  const bg = cpBgs[bgIdx];
+  
+  if (!product || !bg) {
+    clearPreview('cp');
+    return;
+  }
+  
+  try {
+    const results = await composeOne(product, bg);
+    const wrap = document.getElementById('cp-preview-wrap');
+    wrap.innerHTML = '';
+    // 只显示第一个结果（不带水印的版本）
+    wrap.appendChild(results[0].canvas);
+  } catch (e) {
+    log('cp-log', `预览失败: ${e.message}`, 'err');
+    clearPreview('cp');
+  }
+}
+
+async function composeOne(product, bg) {
+  const scale = parseFloat(document.getElementById('cp-scale').value);
+  const format = document.getElementById('cp-format').value;
+  
+  const prodImg = await loadImage(product.dataURL);
+  const bgImg = await loadImage(bg.dataURL);
+  
+  const prodW = prodImg.naturalWidth * scale;
+  const prodH = prodImg.naturalHeight * scale;
+  const posX = (bgImg.naturalWidth - prodW) / 2;
+  const posY = (bgImg.naturalHeight - prodH) / 2;
+  
+  // 只使用产品名（SKU）作为文件名，去掉背景名
+  const skuName = nameNoExt(product.name);
+  
+  // 如果没有水印，只返回不带水印的版本
+  if (!cpWatermark) {
+    const outNoWm = document.createElement('canvas');
+    outNoWm.width = bgImg.naturalWidth;
+    outNoWm.height = bgImg.naturalHeight;
+    const ctxNoWm = outNoWm.getContext('2d');
+    ctxNoWm.drawImage(bgImg, 0, 0);
+    ctxNoWm.drawImage(prodImg, posX, posY, prodW, prodH);
+    return [{ canvas: outNoWm, name: `${skuName}.${format}` }];
+  }
+  
+  // 有水印，生成两个版本
+  // 创建不带水印的画布
+  const outNoWm = document.createElement('canvas');
+  outNoWm.width = bgImg.naturalWidth;
+  outNoWm.height = bgImg.naturalHeight;
+  const ctxNoWm = outNoWm.getContext('2d');
+  ctxNoWm.drawImage(bgImg, 0, 0);
+  ctxNoWm.drawImage(prodImg, posX, posY, prodW, prodH);
+  
+  // 创建带水印的画布
+  const outWithWm = document.createElement('canvas');
+  outWithWm.width = bgImg.naturalWidth;
+  outWithWm.height = bgImg.naturalHeight;
+  const ctxWithWm = outWithWm.getContext('2d');
+  ctxWithWm.drawImage(bgImg, 0, 0);
+  ctxWithWm.drawImage(prodImg, posX, posY, prodW, prodH);
+  
+  // 绘制水印在最上面（顶部）
+  const wmImg = await loadImage(cpWatermark.dataURL);
+  const wmTargetW = 1080;
+  const wmW = wmTargetW;
+  const wmH = wmImg.naturalHeight * (wmTargetW / wmImg.naturalWidth);
+  const wmX = (outWithWm.width - wmW) / 2;
+  const wmY = 0;
+  ctxWithWm.drawImage(wmImg, wmX, wmY, wmW, wmH);
+  
+  return [
+    { canvas: outNoWm, name: `${skuName}.${format}` },
+    { canvas: outWithWm, name: `${skuName}_UP.${format}` }
+  ];
+}
+
+async function cpRunBatch() {
+  if (cpRunning || cpProducts.length === 0 || cpBgs.length === 0) return;
+  
+  cpRunning = true;
+  cpResults = [];
+  cpUpdateButtons();
+  clearPreview('cp');
+  
+  const total = cpProducts.length * cpBgs.length;
+  let completed = 0;
+  
+  log('cp-log', '开始批量合成...');
+  
+  for (let i = 0; i < cpProducts.length; i++) {
+    for (let j = 0; j < cpBgs.length; j++) {
+      try {
+        const results = await composeOne(cpProducts[i], cpBgs[j]);
+        // results[0] 不带水印，results[1] 带水印（如果有水印的话）
+        cpResults.push(...results);
+        if (results.length > 1) {
+          log('cp-log', `合成: ${results[0].name} & ${results[1].name}`, 'ok');
+        } else {
+          log('cp-log', `合成: ${results[0].name}`, 'ok');
+        }
+      } catch (e) {
+        log('cp-log', `合成失败: ${cpProducts[i].name} + ${cpBgs[j].name}`, 'err');
+      }
+      
+      completed++;
+      const pct = (completed / total) * 100;
+      setProgress('cp-progress-bar', 'cp-progress-text', pct, `${completed}/${total}`);
+    }
+  }
+  
+  cpRunning = false;
+  setProgress('cp-progress-bar', 'cp-progress-text', 100, `完成: ${cpResults.length}/${total}`);
+  log('cp-log', `批量合成完成，成功 ${cpResults.length} 张`, 'ok');
+  cpUpdateButtons();
+}
+
+async function cpDownloadAll() {
+  if (cpResults.length === 0) return;
+  
+  if (!downloadDirHandle) {
+    log('cp-log', '请先选择输出目录', 'err');
+    return;
+  }
+  
+  log('cp-log', `开始下载到: ${downloadDirName}...`);
+  
+  const format = document.getElementById('cp-format').value;
+  const quality = parseInt(document.getElementById('cp-quality').value) || 95;
+  let successCount = 0;
+  
+  for (let i = 0; i < cpResults.length; i++) {
+    const result = cpResults[i];
+    try {
+      const blob = await canvasToBlob(result.canvas, format, quality);
+      const ext = format === 'jpeg' ? 'jpg' : format;
+      const fileName = `${nameNoExt(result.name)}.${ext}`;
+      
+      // 使用 File System Access API 保存到选定目录
+      const fileHandle = await downloadDirHandle.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      
+      successCount++;
+      log('cp-log', `保存: ${fileName}`, 'ok');
+    } catch (e) {
+      log('cp-log', `保存失败: ${result.name} - ${e.message}`, 'err');
+    }
+  }
+  
+  log('cp-log', `下载完成: ${successCount}/${cpResults.length} 张`, 'ok');
+}
+
+</script>
+</body>
+</html>

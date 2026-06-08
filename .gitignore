@@ -1,0 +1,17 @@
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+build/
