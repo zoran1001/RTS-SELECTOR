@@ -387,6 +387,15 @@ input[type="checkbox"] {
 .drop-zone:hover .dz-icon svg, .drop-zone.drag-over .dz-icon svg { color: var(--red); }
 .dz-text { font-size: 12px; font-weight: 600; color: var(--white-2); }
 .dz-sub { font-size: 11px; color: var(--white-3); }
+.dz-notice {
+  font-size: 11px;
+  color: var(--yellow);
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 4px;
+  border-left: 2px solid var(--yellow);
+}
 
 .file-table {
   width: 100%;
@@ -637,6 +646,7 @@ input[type="checkbox"] {
           </div>
           <div class="dz-text">拖拽图片到这里</div>
           <div class="dz-sub">PNG · JPG · WEBP · BMP — 支持批量</div>
+          <div class="dz-notice" id="pp-transparent-notice">️ 请上传透明底产品图（PNG 格式），以保证处理效果</div>
         </div>
         <div class="flex mt-12" style="gap:8px">
           <button class="btn btn-danger" id="pp-clear-btn" onclick="ppClearAll()">清除</button>
@@ -1046,6 +1056,7 @@ const translations = {
     'log_compose': '合成',
     'log_compose_failed': '合成失败',
     'log_batch_compose_complete': '批量合成完成，成功',
+    'transparent_notice': '️ 请上传透明底产品图（PNG 格式），以保证处理效果',
     'background_images': '背景图',
     'drag_product_here': '拖拽产品图到这里',
     'drag_background_here': '拖拽背景图到这里',
@@ -1133,6 +1144,7 @@ const translations = {
     'log_compose': 'Compose',
     'log_compose_failed': 'Compose failed',
     'log_batch_compose_complete': 'Batch compose complete, success',
+    'transparent_notice': '️ Please upload transparent PNG images for best results',
     // Compose
     'product_images': 'Product Images',
     'background_images': 'Background Images',
@@ -1204,6 +1216,7 @@ function applyTranslations() {
   setText('#pp-download-dir-display', currentLang === 'zh' ? '请先选择输出目录' : 'Please select output directory');
   setText('#pp-prod-drop .dz-text', t('select_files'));
   setText('#pp-prod-drop .dz-sub', t('drag_files_here'));
+  setText('#pp-transparent-notice', t('transparent_notice'));
   setText('#pp-clear-btn', t('clear'));
   setText('#cp-clear-prod-btn', t('clear'));
   setText('#cp-clear-bg-btn', t('clear'));
