@@ -914,7 +914,33 @@ function log(areaId, msg, type = '') {
   line.className = 'log-line' + (type ? ' ' + type : '');
   const now = new Date();
   const ts = now.toTimeString().slice(0, 8);
-  line.textContent = `[${ts}] ${msg}`;
+  
+  // 翻译日志消息
+  let translatedMsg = msg;
+  const translations = {
+    '已选择输出目录': t('log_dir_selected'),
+    '选择目录失败': t('log_dir_select_failed'),
+    '处理': t('log_processing'),
+    '失败': t('log_failed'),
+    '批量处理完成，成功': t('log_batch_complete'),
+    '张，失败': t('log_success'),
+    '请先选择输出目录': t('log_select_dir_first'),
+    '开始下载到': t('log_start_download'),
+    '保存': t('log_saved'),
+    '保存失败': t('log_save_failed'),
+    '下载完成': t('log_download_complete'),
+    '预览失败': t('log_preview_failed'),
+    '开始批量合成...': t('log_start_compose'),
+    '合成': t('log_compose'),
+    '合成失败': t('log_compose_failed'),
+    '批量合成完成，成功': t('log_batch_compose_complete'),
+  };
+  
+  for (const [cn, trans] of Object.entries(translations)) {
+    translatedMsg = translatedMsg.replace(cn, trans);
+  }
+  
+  line.textContent = `[${ts}] ${translatedMsg}`;
   area.appendChild(line);
   area.scrollTop = area.scrollHeight;
 }
@@ -1003,8 +1029,23 @@ const translations = {
     'level_3_desc': '适用于 nimbus 这类具有三个风扇的中型产品',
     'level_4_desc': '适用于大号的机箱，例如 ULTRACORE 这类产品',
     'level_5_desc': '适用于最大号的机箱，例如 AETHER 这类产品',
-    // Compose
-    'product_images': '产品图',
+    // Log messages
+    'log_dir_selected': '已选择输出目录',
+    'log_dir_select_failed': '选择目录失败',
+    'log_processing': '处理',
+    'log_failed': '失败',
+    'log_batch_complete': '批量处理完成，成功',
+    'log_success': '张，失败',
+    'log_select_dir_first': '请先选择输出目录',
+    'log_start_download': '开始下载到',
+    'log_saved': '保存',
+    'log_save_failed': '保存失败',
+    'log_download_complete': '下载完成',
+    'log_preview_failed': '预览失败',
+    'log_start_compose': '开始批量合成...',
+    'log_compose': '合成',
+    'log_compose_failed': '合成失败',
+    'log_batch_compose_complete': '批量合成完成，成功',
     'background_images': '背景图',
     'drag_product_here': '拖拽产品图到这里',
     'drag_background_here': '拖拽背景图到这里',
@@ -1075,6 +1116,23 @@ const translations = {
     'level_3_desc': 'For medium products with 3 fans like nimbus',
     'level_4_desc': 'For large cases like ULTRACORE',
     'level_5_desc': 'For extra-large cases like AETHER',
+    // Log messages
+    'log_dir_selected': 'Output directory selected',
+    'log_dir_select_failed': 'Failed to select directory',
+    'log_processing': 'Processing',
+    'log_failed': 'Failed',
+    'log_batch_complete': 'Batch processing complete, success',
+    'log_success': 'images, failed',
+    'log_select_dir_first': 'Please select output directory first',
+    'log_start_download': 'Starting download to',
+    'log_saved': 'Saved',
+    'log_save_failed': 'Failed to save',
+    'log_download_complete': 'Download complete',
+    'log_preview_failed': 'Preview failed',
+    'log_start_compose': 'Starting batch compose...',
+    'log_compose': 'Compose',
+    'log_compose_failed': 'Compose failed',
+    'log_batch_compose_complete': 'Batch compose complete, success',
     // Compose
     'product_images': 'Product Images',
     'background_images': 'Background Images',
