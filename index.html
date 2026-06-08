@@ -204,6 +204,41 @@ html, body {
   border: 1px solid var(--border-red);
 }
 
+.level-guide {
+  padding: 12px 0;
+}
+
+.level-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.level-item:last-child {
+  border-bottom: none;
+}
+
+.level-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: var(--red);
+  color: white;
+  border-radius: 4px;
+}
+
+.level-desc {
+  font-size: 13px;
+  color: var(--white-2);
+}
+
 label {
   display: block;
   font-size: 11px;
@@ -632,6 +667,34 @@ input[type="checkbox"] {
           </table>
         </div>
       </div>
+
+      <div class="card mt-14">
+        <div class="section-head">
+          <span class="section-title" id="pp-level-guide">等级选择说明</span>
+        </div>
+        <div class="level-guide" id="pp-level-guide-content">
+          <div class="level-item">
+            <span class="level-number">1</span>
+            <span class="level-desc" id="pp-level-1">适用于 zeal mini 等小型产品</span>
+          </div>
+          <div class="level-item">
+            <span class="level-number">2</span>
+            <span class="level-desc" id="pp-level-2">适用于 CHAMBER 这类中小型产品</span>
+          </div>
+          <div class="level-item">
+            <span class="level-number">3</span>
+            <span class="level-desc" id="pp-level-3">适用于 nimbus 这类具有三个风扇的中型产品</span>
+          </div>
+          <div class="level-item">
+            <span class="level-number">4</span>
+            <span class="level-desc" id="pp-level-4">适用于大号的机箱，例如 ULTRACORE 这类产品</span>
+          </div>
+          <div class="level-item">
+            <span class="level-number">5</span>
+            <span class="level-desc" id="pp-level-5">适用于最大号的机箱，例如 AETHER 这类产品</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div>
@@ -934,6 +997,12 @@ const translations = {
     'select_files': '选择文件',
     'drag_files_here': '拖拽图片文件到这里',
     'support_batch': '支持批量拖入',
+    'level_guide': '等级选择说明',
+    'level_1_desc': '适用于 zeal mini 等小型产品',
+    'level_2_desc': '适用于 CHAMBER 这类中小型产品',
+    'level_3_desc': '适用于 nimbus 这类具有三个风扇的中型产品',
+    'level_4_desc': '适用于大号的机箱，例如 ULTRACORE 这类产品',
+    'level_5_desc': '适用于最大号的机箱，例如 AETHER 这类产品',
     // Compose
     'product_images': '产品图',
     'background_images': '背景图',
@@ -1000,6 +1069,12 @@ const translations = {
     'select_files': 'Select Files',
     'drag_files_here': 'Drag images here',
     'support_batch': 'Batch drag supported',
+    'level_guide': 'Level Selection Guide',
+    'level_1_desc': 'For small products like zeal mini',
+    'level_2_desc': 'For small-medium products like CHAMBER',
+    'level_3_desc': 'For medium products with 3 fans like nimbus',
+    'level_4_desc': 'For large cases like ULTRACORE',
+    'level_5_desc': 'For extra-large cases like AETHER',
     // Compose
     'product_images': 'Product Images',
     'background_images': 'Background Images',
@@ -1074,6 +1149,12 @@ function applyTranslations() {
   setText('#pp-clear-btn', t('clear'));
   setText('#cp-clear-prod-btn', t('clear'));
   setText('#cp-clear-bg-btn', t('clear'));
+  setText('#pp-level-guide', t('level_guide'));
+  setText('#pp-level-1', t('level_1_desc'));
+  setText('#pp-level-2', t('level_2_desc'));
+  setText('#pp-level-3', t('level_3_desc'));
+  setText('#pp-level-4', t('level_4_desc'));
+  setText('#pp-level-5', t('level_5_desc'));
   
   // Compose tab
   setText('#cp-prod-label', t('product_images'));
