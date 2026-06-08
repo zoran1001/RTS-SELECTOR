@@ -685,8 +685,8 @@ input[type="checkbox"] {
             <thead>
               <tr>
                 <th></th>
-                <th>文件名</th>
-                <th>级别</th>
+                <th id="pp-th-filename">文件名</th>
+                <th id="pp-th-level">级别</th>
                 <th></th>
               </tr>
             </thead>
@@ -1085,6 +1085,8 @@ const translations = {
     'log_compose_failed': '合成失败',
     'log_batch_compose_complete': '批量合成完成，成功',
     'transparent_notice': '️ 请上传透明底产品图（PNG 格式），以保证处理效果',
+    'filename': '文件名',
+    'level': '级别',
     'compose_guide': '合成提示',
     'compose_guide_spec': '图片规格：所有图片尺寸需为 1080 × 1080 像素',
     'compose_guide_prod': '产品图建议：请先使用「预处理工具」生成规范产品图后再进行合成',
@@ -1176,6 +1178,8 @@ const translations = {
     'log_compose_failed': 'Compose failed',
     'log_batch_compose_complete': 'Batch compose complete, success',
     'transparent_notice': '️ Please upload transparent PNG images for best results',
+    'filename': 'Filename',
+    'level': 'Level',
     'compose_guide': 'Compose Guide',
     'compose_guide_spec': 'Image Spec: All images must be 1080 × 1080 pixels',
     'compose_guide_prod': 'Product Images: Please use "Preprocess Tool" to generate standard images before composing',
@@ -1252,6 +1256,8 @@ function applyTranslations() {
   setText('#pp-prod-drop .dz-sub', t('drag_files_here'));
   setText('#pp-transparent-notice', t('transparent_notice'));
   setText('#pp-clear-btn', t('clear'));
+  setText('#pp-th-filename', t('filename'));
+  setText('#pp-th-level', t('level'));
   setText('#cp-clear-prod-btn', t('clear'));
   setText('#cp-clear-bg-btn', t('clear'));
   setText('#pp-level-guide', t('level_guide'));
