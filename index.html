@@ -397,6 +397,23 @@ input[type="checkbox"] {
   border-left: 2px solid var(--yellow);
 }
 
+.guide-content ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-content li {
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--white-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-content li:last-child {
+  border-bottom: none;
+}
+
 .file-table {
   width: 100%;
   border-collapse: collapse;
@@ -760,6 +777,17 @@ input[type="checkbox"] {
 <!--  Tab 2 — 合成工具                              -->
 <!-- ══════════════════════════════════════════════ -->
 <div id="tab-compose" class="tab-content">
+  <div class="card mb-14" id="cp-guide-card">
+    <div class="section-head">
+      <span class="section-title" id="cp-guide-label">合成提示</span>
+    </div>
+    <div class="guide-content">
+      <ul>
+        <li id="cp-guide-spec"><strong>图片规格：</strong>所有图片尺寸需为 1080 × 1080 像素</li>
+        <li id="cp-guide-prod"><strong>产品图建议：</strong>请先使用「预处理工具」生成规范产品图后再进行合成</li>
+      </ul>
+    </div>
+  </div>
   <div class="grid-2" style="align-items:start">
     <div>
       <div class="card">
@@ -1057,6 +1085,9 @@ const translations = {
     'log_compose_failed': '合成失败',
     'log_batch_compose_complete': '批量合成完成，成功',
     'transparent_notice': '️ 请上传透明底产品图（PNG 格式），以保证处理效果',
+    'compose_guide': '合成提示',
+    'compose_guide_spec': '图片规格：所有图片尺寸需为 1080 × 1080 像素',
+    'compose_guide_prod': '产品图建议：请先使用「预处理工具」生成规范产品图后再进行合成',
     'background_images': '背景图',
     'drag_product_here': '拖拽产品图到这里',
     'drag_background_here': '拖拽背景图到这里',
@@ -1145,6 +1176,9 @@ const translations = {
     'log_compose_failed': 'Compose failed',
     'log_batch_compose_complete': 'Batch compose complete, success',
     'transparent_notice': '️ Please upload transparent PNG images for best results',
+    'compose_guide': 'Compose Guide',
+    'compose_guide_spec': 'Image Spec: All images must be 1080 × 1080 pixels',
+    'compose_guide_prod': 'Product Images: Please use "Preprocess Tool" to generate standard images before composing',
     // Compose
     'product_images': 'Product Images',
     'background_images': 'Background Images',
@@ -1228,6 +1262,9 @@ function applyTranslations() {
   setText('#pp-level-5', t('level_5_desc'));
   
   // Compose tab
+  setText('#cp-guide-label', t('compose_guide'));
+  setText('#cp-guide-spec', t('compose_guide_spec'));
+  setText('#cp-guide-prod', t('compose_guide_prod'));
   setText('#cp-prod-label', t('product_images'));
   setText('#cp-bg-label', t('background_images'));
   setText('#cp-prod-drop .dz-text', t('select_files'));
