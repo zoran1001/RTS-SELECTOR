@@ -1278,6 +1278,7 @@ function t(key) {
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('tool_language', currentLang);
+  localStorage.setItem('lang_modal_done', 'true');
   document.getElementById('langModal').classList.add('hidden');
   applyTranslations();
 }
@@ -1378,10 +1379,11 @@ function selectFolder(inputId) {
 }
 
 window.addEventListener('load', () => {
-  // 检查是否已经选择过语言
-  const savedLang = localStorage.getItem('tool_language');
-  if (savedLang) {
-    currentLang = savedLang;
+  // 检查是否已经通过弹窗选择过语言
+  const modalDone = localStorage.getItem('lang_modal_done');
+  if (modalDone === 'true') {
+    const savedLang = localStorage.getItem('tool_language');
+    if (savedLang) currentLang = savedLang;
     document.getElementById('langModal').classList.add('hidden');
   }
   // 应用翻译
