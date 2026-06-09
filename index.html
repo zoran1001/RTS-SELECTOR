@@ -829,11 +829,8 @@ input[type="checkbox"] {
             <span class="placeholder-text">导入文件后点击行预览效果</span>
           </div>
         </div>
-        <div class="preview-actions" id="pp-preview-actions" style="margin-top:12px; display:flex; gap:10px; justify-content:center; display:none;">
-          <button class="btn btn-primary" id="pp-preprocess-one-btn" onclick="ppPreprocessOne()" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span class="btn-text" id="pp-preprocess-one-text">预处理并保存</span>
-          </button>
+        <div class="preview-hint" id="pp-preview-hint-text" style="margin-top:12px; font-size:12px; color:var(--white-4); text-align:center;">
+          可以把原始不同尺寸的原图处理成正确的产品图
         </div>
       </div>
     </div>
@@ -1119,7 +1116,6 @@ const translations = {
     'select_output_dir': '选择输出目录',
     'download_all': '下载全部',
     'preview_current': '预览当前',
-    'preprocess_save': '预处理并保存',
     'select_output_first': '请先选择输出目录',
     'output_to': '输出到',
     'start_processing': '开始处理...',
@@ -1155,6 +1151,7 @@ const translations = {
     'log_compose_failed': '合成失败',
     'log_batch_compose_complete': '批量合成完成，成功',
     'transparent_notice': '️ 请上传透明底产品图（PNG 格式），以保证处理效果',
+    'preview_hint_text': '可以把原始不同尺寸的原图处理成正确的产品图',
     'filename': '文件名',
     'level': '级别',
     'compose_guide': '合成提示',
@@ -1215,7 +1212,6 @@ const translations = {
     'select_output_dir': 'Select Output Directory',
     'download_all': 'Download All',
     'preview_current': 'Preview Current',
-    'preprocess_save': 'Preprocess & Save',
     'select_output_first': 'Please select output directory first',
     'output_to': 'Output to',
     'start_processing': 'Starting process...',
@@ -1251,6 +1247,7 @@ const translations = {
     'log_compose_failed': 'Compose failed',
     'log_batch_compose_complete': 'Batch compose complete, success',
     'transparent_notice': '️ Please upload transparent PNG images for best results',
+    'preview_hint_text': 'Convert original images of any size into correct product images',
     'filename': 'Filename',
     'level': 'Level',
     'compose_guide': 'Compose Guide',
@@ -1331,11 +1328,11 @@ function applyTranslations() {
   setText('#pp-select-dir-btn .btn-text', t('select_output_dir'));
   setText('#pp-download-btn .btn-text', t('download_all'));
   setText('#pp-preview-btn', t('preview_current'));
-  setText('#pp-preprocess-one-text', t('preprocess_save'));
   setText('#pp-download-dir-display', currentLang === 'zh' ? '请先选择输出目录' : 'Please select output directory');
   setText('#pp-prod-drop .dz-text', t('select_files'));
   setText('#pp-prod-drop .dz-sub', t('drag_files_here'));
   setText('#pp-transparent-notice', t('transparent_notice'));
+  setHTML('#pp-preview-hint-text', t('preview_hint_text'));
   setText('#pp-clear-btn', t('clear'));
   setText('#pp-batch-del-text', t('delete_selected'));
   setText('#pp-th-filename', t('filename'));
@@ -1543,8 +1540,6 @@ function ppSelectRow(idx) {
   ppRebuildTable();
   ppPreviewCurrent();
   document.getElementById('pp-preview-btn').disabled = false;
-  document.getElementById('pp-preprocess-one-btn').disabled = false;
-  document.getElementById('pp-preview-actions').style.display = 'flex';
 }
 
 function ppRemoveRow(idx) {
@@ -1553,10 +1548,6 @@ function ppRemoveRow(idx) {
   ppRebuildTable();
   ppUpdateCount();
   if (ppSelectedIdx >= 0) ppPreviewCurrent(); else clearPreview('pp');
-  if (ppSelectedIdx < 0) {
-    document.getElementById('pp-preprocess-one-btn').disabled = true;
-    document.getElementById('pp-preview-actions').style.display = 'none';
-  }
 }
 
 // 全选/取消全选
@@ -1761,32 +1752,6 @@ async function ppPreviewCurrent() {
   } catch (e) {
     log('pp-log', `${t('log_preview_failed')}: ${e.message}`, 'err');
     clearPreview('pp');
-  }
-}
-
-// 预处理当前选中的图片并保存
-async function ppPreprocessOne() {
-  if (ppSelectedIdx < 0 || ppSelectedIdx >= ppFiles.length) return;
-  if (!downloadDirHandle) {
-    log('pp-log', t('log_select_dir_first'), 'err');
-    return;
-  }
-  
-  const item = ppFiles[ppSelectedIdx];
-  try {
-    log('pp-log', `${t('log_processing')}: ${item.name}`);
-    const result = await preprocessOneV2(item);
-    
-    const blob = await canvasToBlob(result.canvas, 'png', 95);
-    const baseName = nameNoExt(result.name);
-    const fileHandle = await downloadDirHandle.getFileHandle(baseName + '_processed.png', { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-    
-    log('pp-log', `${t('log_saved')}: ${baseName}_processed.png`, 'ok');
-  } catch (e) {
-    log('pp-log', `${t('log_failed')}: ${item.name} - ${e.message}`, 'err');
   }
 }
 
