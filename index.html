@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -18,6 +18,8 @@
   --red-dim:    rgba(230,57,70,.12);
   --red-mid:    rgba(230,57,70,.25);
   --red-bright: #ff4d5a;
+  --green: #22c55e;
+  --yellow: #fbbf24;
   --white:      #f5f5f5;
   --white-2:    #c8c8c8;
   --white-3:    #888888;
@@ -309,9 +311,9 @@ input[type="checkbox"] {
   display: inline;
 }
 
-  color: var(--white-3);
-
 .btn:disabled { opacity: .35; cursor: not-allowed; }
+.text-sm { font-size: 11px; }
+.mb-14 { margin-bottom: 14px; }
 
 .placeholder-text {
   display: block;
@@ -451,7 +453,9 @@ input[type="checkbox"] {
   background: repeating-conic-gradient(#1c1c1c 0% 25%, #141414 0% 50%) 0 0 / 8px 8px;
   display: block;
 }
-.file-table select { width: 80px; padding: 4px 8px; font-size: 11px; }
+.file-table select { width: 100px; padding: 4px 8px; font-size: 11px; }
+.file-table th input[type="checkbox"] { accent-color: var(--red); cursor: pointer; }
+.file-table td input[type="checkbox"] { accent-color: var(--red); cursor: pointer; }
 .table-wrap {
   max-height: 300px;
   overflow-y: auto;
@@ -669,6 +673,7 @@ input[type="checkbox"] {
         </div>
         <div class="flex mt-12" style="gap:8px">
           <button class="btn btn-danger" id="pp-clear-btn" onclick="ppClearAll()">清除</button>
+          <button class="btn btn-danger" id="pp-batch-del-btn" onclick="ppBatchDelete()" style="display:none"><span id="pp-batch-del-text">删除选中</span></button>
         </div>
       </div>
 
@@ -686,7 +691,7 @@ input[type="checkbox"] {
             </colgroup>
             <thead>
               <tr>
-                <th></th>
+                <th><input type="checkbox" id="pp-select-all" onchange="ppToggleSelectAll(this.checked)" style="cursor:pointer"></th>
                 <th id="pp-th-filename">文件名</th>
                 <th id="pp-th-level">级别</th>
                 <th></th>
@@ -931,8 +936,6 @@ input[type="checkbox"] {
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
 <script>
 // ═══════════════════════════════════════════════════════
 //  Utility
@@ -954,33 +957,7 @@ function log(areaId, msg, type = '') {
   line.className = 'log-line' + (type ? ' ' + type : '');
   const now = new Date();
   const ts = now.toTimeString().slice(0, 8);
-  
-  // 翻译日志消息
-  let translatedMsg = msg;
-  const translations = {
-    '已选择输出目录': t('log_dir_selected'),
-    '选择目录失败': t('log_dir_select_failed'),
-    '处理': t('log_processing'),
-    '失败': t('log_failed'),
-    '批量处理完成，成功': t('log_batch_complete'),
-    '张，失败': t('log_success'),
-    '请先选择输出目录': t('log_select_dir_first'),
-    '开始下载到': t('log_start_download'),
-    '保存': t('log_saved'),
-    '保存失败': t('log_save_failed'),
-    '下载完成': t('log_download_complete'),
-    '预览失败': t('log_preview_failed'),
-    '开始批量合成...': t('log_start_compose'),
-    '合成': t('log_compose'),
-    '合成失败': t('log_compose_failed'),
-    '批量合成完成，成功': t('log_batch_compose_complete'),
-  };
-  
-  for (const [cn, trans] of Object.entries(translations)) {
-    translatedMsg = translatedMsg.replace(cn, trans);
-  }
-  
-  line.textContent = `[${ts}] ${translatedMsg}`;
+  line.textContent = `[${ts}] ${msg}`;
   area.appendChild(line);
   area.scrollTop = area.scrollHeight;
 }
@@ -1034,6 +1011,7 @@ const translations = {
     // Common
     'clear': '清除',
     'remove': '移除',
+    'delete_selected': '删除选中',
     'loading': '加载中...',
     'ready': '就绪',
     'start': '开始',
@@ -1112,6 +1090,7 @@ const translations = {
     'compose_failed': '合成失败',
     'compose_complete': '批量合成完成',
     'combo_count': '组合数',
+    'combo_count_prefix': '共',
     'images': '张',
     // Status
     'dir_selected': '已选择输出目录',
@@ -1127,6 +1106,7 @@ const translations = {
     // Common
     'clear': 'Clear',
     'remove': 'Remove',
+    'delete_selected': 'Delete Selected',
     'loading': 'Loading...',
     'ready': 'Ready',
     'start': 'Start',
@@ -1210,6 +1190,7 @@ const translations = {
     'compose_failed': 'Compose failed',
     'compose_complete': 'Batch compose complete',
     'combo_count': 'combos',
+    'combo_count_prefix': 'Total',
     'images': 'images',
     // Status
     'dir_selected': 'Output directory selected',
@@ -1258,6 +1239,7 @@ function applyTranslations() {
   setText('#pp-prod-drop .dz-sub', t('drag_files_here'));
   setText('#pp-transparent-notice', t('transparent_notice'));
   setText('#pp-clear-btn', t('clear'));
+  setText('#pp-batch-del-text', t('delete_selected'));
   setText('#pp-th-filename', t('filename'));
   setText('#pp-th-level', t('level'));
   setText('#cp-clear-prod-btn', t('clear'));
@@ -1334,19 +1316,20 @@ async function selectDownloadDirectory() {
   try {
     downloadDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
     downloadDirName = downloadDirHandle.name;
-    document.getElementById('pp-download-dir-display').textContent = `输出到: ${downloadDirName}`;
+    const dirText = (currentLang === 'zh' ? '输出到: ' : 'Output to: ') + downloadDirName;
+    document.getElementById('pp-download-dir-display').textContent = dirText;
     document.getElementById('pp-download-dir-display').style.color = 'var(--green)';
-    document.getElementById('cp-download-dir-display').textContent = `输出到: ${downloadDirName}`;
+    document.getElementById('cp-download-dir-display').textContent = dirText;
     document.getElementById('cp-download-dir-display').style.color = 'var(--green)';
     document.getElementById('pp-download-btn').disabled = ppResults.length === 0;
     document.getElementById('cp-download-btn').disabled = cpResults.length === 0;
-    log('pp-log', `已选择输出目录: ${downloadDirName}`, 'ok');
-    log('cp-log', `已选择输出目录: ${downloadDirName}`, 'ok');
+    log('pp-log', t('log_dir_selected') + ': ' + downloadDirName, 'ok');
+    log('cp-log', t('log_dir_selected') + ': ' + downloadDirName, 'ok');
   } catch (err) {
     if (err.name !== 'AbortError') {
       console.error('选择目录失败:', err);
-      log('pp-log', '选择目录失败', 'err');
-      log('cp-log', '选择目录失败', 'err');
+      log('pp-log', t('log_dir_select_failed'), 'err');
+      log('cp-log', t('log_dir_select_failed'), 'err');
     }
   }
 }
@@ -1369,7 +1352,7 @@ const PP_WHITE_THRESHOLD = 240;
 // ═══════════════════════════════════════════════════════
 
 function ppUpdateCount() {
-  document.getElementById('pp-count').textContent = ppFiles.length + ' 张';
+  document.getElementById('pp-count').textContent = ppFiles.length + (currentLang === 'zh' ? ' 张' : ' images');
   const hasFiles = ppFiles.length > 0;
   const hasResults = ppResults.length > 0;
   document.getElementById('pp-run-btn').disabled = !hasFiles || ppRunning;
@@ -1378,25 +1361,18 @@ function ppUpdateCount() {
 }
 
 function ppAddFiles(files) {
-  console.log('ppAddFiles called with files:', files);
   const tasks = Array.from(files).map(async f => {
     const ext = f.name.split('.').pop().toLowerCase();
-    console.log('Processing file:', f.name, 'Extension:', ext);
-    if (!['png','jpg','jpeg','webp','bmp','tiff','tif'].includes(ext)) {
-      console.log('Skipping file:', f.name, 'Unsupported extension');
-      return;
-    }
+    if (!['png','jpg','jpeg','webp','bmp','tiff','tif'].includes(ext)) return;
     try {
       const dataURL = await fileToDataURL(f);
       const defaultLevel = 3;
       ppFiles.push({ file: f, dataURL, name: f.name, level: defaultLevel });
-      console.log('File added:', f.name);
     } catch (error) {
       console.error('Error processing file:', f.name, error);
     }
   });
   Promise.all(tasks).then(() => {
-    console.log('All files processed, total files:', ppFiles.length);
     ppRebuildTable();
     ppUpdateCount();
     if (ppFiles.length > 0 && ppSelectedIdx < 0) {
@@ -1413,6 +1389,14 @@ function ppRebuildTable() {
     if (idx === ppSelectedIdx) tr.classList.add('selected');
     tr.style.cursor = 'pointer';
     tr.onclick = () => ppSelectRow(idx);
+
+    const tdCheck = document.createElement('td');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.style.cursor = 'pointer';
+    cb.dataset.idx = idx;
+    cb.onclick = e => { e.stopPropagation(); ppUpdateSelectAllState(); };
+    tdCheck.appendChild(cb);
 
     const tdThumb = document.createElement('td');
     const img = document.createElement('img');
@@ -1444,16 +1428,19 @@ function ppRebuildTable() {
     const btn = document.createElement('button');
     btn.className = 'btn btn-danger';
     btn.style.cssText = 'padding:3px 8px; font-size:11px';
-    btn.textContent = '✕';
+    btn.textContent = currentLang === 'zh' ? '✕' : '✕';
+    btn.title = t('remove');
     btn.onclick = e => { e.stopPropagation(); ppRemoveRow(idx); };
     tdDel.appendChild(btn);
 
+    tr.appendChild(tdCheck);
     tr.appendChild(tdThumb);
     tr.appendChild(tdName);
     tr.appendChild(tdLevel);
     tr.appendChild(tdDel);
     tbody.appendChild(tr);
   });
+  ppUpdateSelectAllState();
 }
 
 function ppSelectRow(idx) {
@@ -1465,6 +1452,35 @@ function ppSelectRow(idx) {
 
 function ppRemoveRow(idx) {
   ppFiles.splice(idx, 1);
+  if (ppSelectedIdx >= ppFiles.length) ppSelectedIdx = ppFiles.length - 1;
+  ppRebuildTable();
+  ppUpdateCount();
+  if (ppSelectedIdx >= 0) ppPreviewCurrent(); else clearPreview('pp');
+}
+
+// 全选/取消全选
+function ppToggleSelectAll(checked) {
+  document.querySelectorAll('#pp-tbody input[type="checkbox"]').forEach(cb => cb.checked = checked);
+  document.getElementById('pp-batch-del-btn').style.display = checked && ppFiles.length > 0 ? '' : 'none';
+}
+
+// 更新全选复选框状态和批量删除按钮显示
+function ppUpdateSelectAllState() {
+  const checkboxes = document.querySelectorAll('#pp-tbody input[type="checkbox"]');
+  const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+  const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+  const selectAll = document.getElementById('pp-select-all');
+  selectAll.checked = allChecked;
+  selectAll.indeterminate = someChecked && !allChecked;
+  document.getElementById('pp-batch-del-btn').style.display = someChecked ? '' : 'none';
+}
+
+// 批量删除选中行
+function ppBatchDelete() {
+  const checkboxes = document.querySelectorAll('#pp-tbody input[type="checkbox"]:checked');
+  if (checkboxes.length === 0) return;
+  const indices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.idx)).sort((a, b) => b - a);
+  indices.forEach(idx => ppFiles.splice(idx, 1));
   if (ppSelectedIdx >= ppFiles.length) ppSelectedIdx = ppFiles.length - 1;
   ppRebuildTable();
   ppUpdateCount();
@@ -1483,12 +1499,12 @@ function ppClearAll() {
 
 function clearPreview(prefix) {
   const wrap = document.getElementById(prefix + '-preview-wrap');
-  wrap.innerHTML = '<div class="preview-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>暂无预览</div>';
+  wrap.innerHTML = `<div class="preview-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${t('no_preview')}</div>`;
 }
 
 function ppDrop(e) {
   e.preventDefault();
-  document.getElementById('pp-drop').classList.remove('drag-over');
+  document.getElementById('pp-prod-drop').classList.remove('drag-over');
   ppAddFiles(e.dataTransfer.files);
 }
 function ppFilesSelected(files) { ppAddFiles(files); }
@@ -1551,16 +1567,15 @@ async function preprocessOneV2(item) {
     cropBox.left, cropBox.top, cropW, cropH,
     0, 0, newW, newH);
 
-  const offsetX = Math.round((canvasSize - newW) / 2);
-  const offsetY = Math.round(topMargin);
-
   const out = document.createElement('canvas');
   out.width = canvasSize;
   out.height = canvasSize;
   const ctx = out.getContext('2d');
-  
+
+  const offsetX = Math.round((canvasSize - newW) / 2);
+  const offsetY = topMargin + Math.round((usableH - newH) / 2);
   ctx.drawImage(prodC, offsetX, offsetY);
-  
+
   return { canvas: out, name: item.name };
 }
 
@@ -1571,7 +1586,7 @@ async function ppRunBatch() {
   ppResults = [];
   document.getElementById('pp-run-btn').disabled = true;
   document.getElementById('pp-log').innerHTML = '';
-  setProgress('pp-progress-bar', 'pp-progress-text', 0, '开始处理...');
+  setProgress('pp-progress-bar', 'pp-progress-text', 0, t('start_processing'));
   
   const total = ppFiles.length;
   let success = 0;
@@ -1579,20 +1594,20 @@ async function ppRunBatch() {
   for (let i = 0; i < total; i++) {
     const item = ppFiles[i];
     try {
-      log('pp-log', `处理: ${item.name}`);
+      log('pp-log', `${t('log_processing')}: ${item.name}`);
       const result = await preprocessOneV2(item);
       ppResults.push({ ...result, index: i });
       success++;
     } catch (e) {
-      log('pp-log', `失败: ${item.name} - ${e.message}`, 'err');
+      log('pp-log', `${t('log_failed')}: ${item.name} - ${e.message}`, 'err');
     }
     const pct = ((i + 1) / total) * 100;
     setProgress('pp-progress-bar', 'pp-progress-text', pct, `${i + 1}/${total}`);
   }
   
   ppRunning = false;
-  setProgress('pp-progress-bar', 'pp-progress-text', 100, `完成: ${success}/${total}`);
-  log('pp-log', `批量处理完成，成功 ${success} 张，失败 ${total - success} 张`, success === total ? 'ok' : 'warn');
+  setProgress('pp-progress-bar', 'pp-progress-text', 100, `${t('complete')}: ${success}/${total}`);
+  log('pp-log', `${t('log_batch_complete')} ${success} ${t('images')}，${t('log_failed')} ${total - success} ${t('images')}`, success === total ? 'ok' : 'warn');
   ppUpdateCount();
 }
 
@@ -1600,11 +1615,11 @@ async function ppDownloadAll() {
   if (ppResults.length === 0) return;
   
   if (!downloadDirHandle) {
-    log('pp-log', '请先选择输出目录', 'err');
+    log('pp-log', t('log_select_dir_first'), 'err');
     return;
   }
   
-  log('pp-log', `开始下载到: ${downloadDirName}...`);
+  log('pp-log', `${t('log_start_download')}: ${downloadDirName}...`);
   
   const format = 'png';
   const quality = 95;
@@ -1618,21 +1633,21 @@ async function ppDownloadAll() {
       const baseName = nameNoExt(result.name);
       const fileName = `${baseName}_processed.${ext}`;
       
-      // 使用 File System Access API 保存到选定目录
       const fileHandle = await downloadDirHandle.getFileHandle(fileName, { create: true });
       const writable = await fileHandle.createWritable();
       await writable.write(blob);
       await writable.close();
       
       successCount++;
-      log('pp-log', `保存: ${fileName}`, 'ok');
+      log('pp-log', `${t('log_saved')}: ${fileName}`, 'ok');
     } catch (e) {
-      log('pp-log', `保存失败: ${result.name} - ${e.message}`, 'err');
+      log('pp-log', `${t('log_save_failed')}: ${result.name} - ${e.message}`, 'err');
     }
   }
   
-  log('pp-log', `下载完成: ${successCount}/${ppResults.length} 张`, 'ok');
+  log('pp-log', `${t('log_download_complete')}: ${successCount}/${ppResults.length} ${t('images')}`, 'ok');
 }
+
 async function ppPreviewCurrent() {
   if (ppSelectedIdx < 0 || ppSelectedIdx >= ppFiles.length) return;
   
@@ -1643,7 +1658,7 @@ async function ppPreviewCurrent() {
     wrap.innerHTML = '';
     wrap.appendChild(result.canvas);
   } catch (e) {
-    log('pp-log', `预览失败: ${e.message}`, 'err');
+    log('pp-log', `${t('log_preview_failed')}: ${e.message}`, 'err');
     clearPreview('pp');
   }
 }
@@ -1724,10 +1739,10 @@ function cpRebuildProductThumbs() {
       <span class="thumb-name">${p.name}</span>
     </div>
   `).join('');
-  document.getElementById('cp-prod-count').textContent = cpProducts.length + ' 张';
+  document.getElementById('cp-prod-count').textContent = cpProducts.length + (currentLang === 'zh' ? ' 张' : ' images');
   
   const sel = document.getElementById('cp-prev-prod');
-  sel.innerHTML = '<option>— 产品 —</option>' + 
+  sel.innerHTML = `<option>${t('select_product')}</option>` + 
     cpProducts.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
 }
 
@@ -1739,10 +1754,10 @@ function cpRebuildBgThumbs() {
       <span class="thumb-name">${b.name}</span>
     </div>
   `).join('');
-  document.getElementById('cp-bg-count').textContent = cpBgs.length + ' 张';
+  document.getElementById('cp-bg-count').textContent = cpBgs.length + (currentLang === 'zh' ? ' 张' : ' images');
   
   const sel = document.getElementById('cp-prev-bg');
-  sel.innerHTML = '<option>— 背景 —</option>' + 
+  sel.innerHTML = `<option>${t('select_background')}</option>` +
     cpBgs.map((b, i) => `<option value="${i}">${b.name}</option>`).join('');
 }
 
@@ -1758,7 +1773,7 @@ function cpSelectBg(idx) {
 
 function cpUpdateComboCount() {
   const count = cpProducts.length * cpBgs.length;
-  document.getElementById('cp-combo-count').textContent = `共 ${count} 种组合`;
+  document.getElementById('cp-combo-count').textContent = t('combo_count_prefix') + ' ' + count + ' ' + t('combo_count');
 }
 
 function cpUpdateButtons() {
@@ -1848,7 +1863,7 @@ async function cpPreview() {
     // 只显示第一个结果（不带水印的版本）
     wrap.appendChild(results[0].canvas);
   } catch (e) {
-    log('cp-log', `预览失败: ${e.message}`, 'err');
+    log('cp-log', `${t('log_preview_failed')}: ${e.message}`, 'err');
     clearPreview('cp');
   }
 }
@@ -1922,21 +1937,20 @@ async function cpRunBatch() {
   const total = cpProducts.length * cpBgs.length;
   let completed = 0;
   
-  log('cp-log', '开始批量合成...');
+  log('cp-log', t('log_start_compose'));
   
   for (let i = 0; i < cpProducts.length; i++) {
     for (let j = 0; j < cpBgs.length; j++) {
       try {
         const results = await composeOne(cpProducts[i], cpBgs[j]);
-        // results[0] 不带水印，results[1] 带水印（如果有水印的话）
         cpResults.push(...results);
         if (results.length > 1) {
-          log('cp-log', `合成: ${results[0].name} & ${results[1].name}`, 'ok');
+          log('cp-log', `${t('log_compose')}: ${results[0].name} & ${results[1].name}`, 'ok');
         } else {
-          log('cp-log', `合成: ${results[0].name}`, 'ok');
+          log('cp-log', `${t('log_compose')}: ${results[0].name}`, 'ok');
         }
       } catch (e) {
-        log('cp-log', `合成失败: ${cpProducts[i].name} + ${cpBgs[j].name}`, 'err');
+        log('cp-log', `${t('log_compose_failed')}: ${cpProducts[i].name} + ${cpBgs[j].name}`, 'err');
       }
       
       completed++;
@@ -1946,8 +1960,8 @@ async function cpRunBatch() {
   }
   
   cpRunning = false;
-  setProgress('cp-progress-bar', 'cp-progress-text', 100, `完成: ${cpResults.length}/${total}`);
-  log('cp-log', `批量合成完成，成功 ${cpResults.length} 张`, 'ok');
+  setProgress('cp-progress-bar', 'cp-progress-text', 100, `${t('complete')}: ${cpResults.length}/${total}`);
+  log('cp-log', `${t('log_batch_compose_complete')} ${cpResults.length} ${t('images')}`, 'ok');
   cpUpdateButtons();
 }
 
@@ -1955,11 +1969,11 @@ async function cpDownloadAll() {
   if (cpResults.length === 0) return;
   
   if (!downloadDirHandle) {
-    log('cp-log', '请先选择输出目录', 'err');
+    log('cp-log', t('log_select_dir_first'), 'err');
     return;
   }
   
-  log('cp-log', `开始下载到: ${downloadDirName}...`);
+  log('cp-log', `${t('log_start_download')}: ${downloadDirName}...`);
   
   const format = document.getElementById('cp-format').value;
   const quality = parseInt(document.getElementById('cp-quality').value) || 95;
@@ -1972,20 +1986,19 @@ async function cpDownloadAll() {
       const ext = format === 'jpeg' ? 'jpg' : format;
       const fileName = `${nameNoExt(result.name)}.${ext}`;
       
-      // 使用 File System Access API 保存到选定目录
       const fileHandle = await downloadDirHandle.getFileHandle(fileName, { create: true });
       const writable = await fileHandle.createWritable();
       await writable.write(blob);
       await writable.close();
       
       successCount++;
-      log('cp-log', `保存: ${fileName}`, 'ok');
+      log('cp-log', `${t('log_saved')}: ${fileName}`, 'ok');
     } catch (e) {
-      log('cp-log', `保存失败: ${result.name} - ${e.message}`, 'err');
+      log('cp-log', `${t('log_save_failed')}: ${result.name} - ${e.message}`, 'err');
     }
   }
   
-  log('cp-log', `下载完成: ${successCount}/${cpResults.length} 张`, 'ok');
+  log('cp-log', `${t('log_download_complete')}: ${successCount}/${cpResults.length} ${t('images')}`, 'ok');
 }
 
 </script>
