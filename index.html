@@ -106,6 +106,12 @@ html, body {
 .lang-modal-btn.primary:hover {
   background: var(--red-bright);
 }
+.lang-modal-hint {
+  font-size: 11px;
+  color: var(--white-4);
+  margin-top: 18px;
+  margin-bottom: 0;
+}
 
 .header {
   height: 56px;
@@ -168,9 +174,9 @@ html, body {
 }
 
 .lang-btn {
-  background: var(--black-3);
-  border: 1px solid var(--border);
-  color: var(--white-2);
+  background: var(--red);
+  border: 1px solid var(--red);
+  color: var(--white);
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 12px;
@@ -179,8 +185,8 @@ html, body {
   transition: all 0.2s;
 }
 .lang-btn:hover {
-  background: var(--black-4);
-  border-color: var(--white-4);
+  background: var(--red-bright);
+  border-color: var(--red-bright);
   color: var(--white);
 }
 
@@ -689,6 +695,7 @@ input[type="checkbox"] {
       <button class="lang-modal-btn" onclick="setLang('en')">English</button>
       <button class="lang-modal-btn primary" onclick="setLang('zh')">中文</button>
     </div>
+    <p class="lang-modal-hint">切换语言可点击右上角按钮 / Switch language via top-right button</p>
   </div>
 </div>
 <header class="header">
@@ -1282,8 +1289,6 @@ function t(key) {
 
 function setLang(lang) {
   currentLang = lang;
-  localStorage.setItem('tool_language', currentLang);
-  localStorage.setItem('lang_modal_done', 'true');
   document.getElementById('langModal').classList.add('hidden');
   applyTranslations();
 }
@@ -1388,13 +1393,6 @@ function selectFolder(inputId) {
 }
 
 window.addEventListener('load', () => {
-  // 检查是否已经通过弹窗选择过语言
-  const modalDone = localStorage.getItem('lang_modal_done');
-  if (modalDone === 'true') {
-    const savedLang = localStorage.getItem('tool_language');
-    if (savedLang) currentLang = savedLang;
-    document.getElementById('langModal').classList.add('hidden');
-  }
   // 应用翻译
   applyTranslations();
   // 自动恢复保存的水印
