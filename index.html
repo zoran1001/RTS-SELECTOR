@@ -197,6 +197,16 @@ html, body {
   padding: 0 28px;
   gap: 0;
 }
+.preview-hint-bar {
+  padding: 18px 28px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--red);
+  text-transform: uppercase;
+  background: var(--black);
+  border-bottom: 1px solid var(--border);
+}
 .tab-btn {
   padding: 14px 22px;
   font-size: 13px;
@@ -734,6 +744,9 @@ input[type="checkbox"] {
 <!--  Tab 1 — 预处理工具                            -->
 <!-- ══════════════════════════════════════════════ -->
 <div id="tab-preprocess" class="tab-content active">
+  <div class="preview-hint-bar" id="pp-preview-hint-text">
+    CONVERT ORIGINAL IMAGES OF ANY SIZE INTO CORRECT PRODUCT IMAGES
+  </div>
   <div class="grid-2" style="align-items:start">
     <div>
       <div class="card">
@@ -828,9 +841,6 @@ input[type="checkbox"] {
             </svg>
             <span class="placeholder-text">导入文件后点击行预览效果</span>
           </div>
-        </div>
-        <div class="preview-hint" id="pp-preview-hint-text" style="margin-top:12px; font-size:12px; color:var(--white-4); text-align:center;">
-          可以把原始不同尺寸的原图处理成正确的产品图
         </div>
       </div>
     </div>
@@ -1151,7 +1161,7 @@ const translations = {
     'log_compose_failed': '合成失败',
     'log_batch_compose_complete': '批量合成完成，成功',
     'transparent_notice': '️ 请上传透明底产品图（PNG 格式），以保证处理效果',
-    'preview_hint_text': '可以把原始不同尺寸的原图处理成正确的产品图',
+    'preview_hint_text': '把原始不同尺寸的原图处理成正确的产品图',
     'filename': '文件名',
     'level': '级别',
     'compose_guide': '合成提示',
@@ -1247,7 +1257,7 @@ const translations = {
     'log_compose_failed': 'Compose failed',
     'log_batch_compose_complete': 'Batch compose complete, success',
     'transparent_notice': '️ Please upload transparent PNG images for best results',
-    'preview_hint_text': 'Convert original images of any size into correct product images',
+    'preview_hint_text': 'CONVERT ORIGINAL IMAGES OF ANY SIZE INTO CORRECT PRODUCT IMAGES',
     'filename': 'Filename',
     'level': 'Level',
     'compose_guide': 'Compose Guide',
@@ -1332,7 +1342,7 @@ function applyTranslations() {
   setText('#pp-prod-drop .dz-text', t('select_files'));
   setText('#pp-prod-drop .dz-sub', t('drag_files_here'));
   setText('#pp-transparent-notice', t('transparent_notice'));
-  setHTML('#pp-preview-hint-text', t('preview_hint_text'));
+  setText('#pp-preview-hint-text', t('preview_hint_text'));
   setText('#pp-clear-btn', t('clear'));
   setText('#pp-batch-del-text', t('delete_selected'));
   setText('#pp-th-filename', t('filename'));
