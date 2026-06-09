@@ -48,6 +48,65 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--white-4); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--white-3); }
 
+.lang-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lang-modal-overlay.hidden { display: none; }
+.lang-modal {
+  background: var(--black-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 36px 40px;
+  text-align: center;
+  min-width: 320px;
+}
+.lang-modal h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.lang-modal p {
+  font-size: 13px;
+  color: var(--white-3);
+  margin-bottom: 24px;
+}
+.lang-modal-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.lang-modal-btn {
+  padding: 12px 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--black-3);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all .2s;
+  min-width: 120px;
+}
+.lang-modal-btn:hover {
+  background: var(--black-4);
+  border-color: var(--red);
+}
+.lang-modal-btn.primary {
+  background: var(--red);
+  border-color: var(--red);
+}
+.lang-modal-btn.primary:hover {
+  background: var(--red-bright);
+}
+
 .header {
   height: 56px;
   background: var(--black-2);
@@ -456,6 +515,8 @@ input[type="checkbox"] {
 .file-table select { width: 100px; padding: 4px 8px; font-size: 11px; }
 .file-table th input[type="checkbox"] { accent-color: var(--red); cursor: pointer; }
 .file-table td input[type="checkbox"] { accent-color: var(--red); cursor: pointer; }
+.file-table td:last-child { text-align: right; overflow: visible !important; }
+.file-table td:last-child .btn { margin-left: auto; }
 .table-wrap {
   max-height: 300px;
   overflow-y: auto;
@@ -615,6 +676,16 @@ input[type="checkbox"] {
 </style>
 </head>
 <body>
+<div class="lang-modal-overlay" id="langModal">
+  <div class="lang-modal">
+    <h2>Select Language</h2>
+    <p>请选择语言 / Please select language</p>
+    <div class="lang-modal-btns">
+      <button class="lang-modal-btn" onclick="setLang('en')">English</button>
+      <button class="lang-modal-btn primary" onclick="setLang('zh')">中文</button>
+    </div>
+  </div>
+</div>
 <header class="header">
   <div class="header-logo">
     <div class="header-icon">
@@ -686,15 +757,15 @@ input[type="checkbox"] {
             <colgroup>
               <col style="width:48px">
               <col>
-              <col style="width:90px">
-              <col style="width:38px">
+              <col style="width:110px">
+              <col style="width:48px">
             </colgroup>
             <thead>
               <tr>
                 <th><input type="checkbox" id="pp-select-all" onchange="ppToggleSelectAll(this.checked)" style="cursor:pointer"></th>
                 <th id="pp-th-filename">文件名</th>
                 <th id="pp-th-level">级别</th>
-                <th></th>
+                <th id="pp-th-action"></th>
               </tr>
             </thead>
             <tbody id="pp-tbody"></tbody>
@@ -1204,6 +1275,13 @@ function t(key) {
   return translations[currentLang][key] || translations.zh[key] || key;
 }
 
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('tool_language', currentLang);
+  document.getElementById('langModal').classList.add('hidden');
+  applyTranslations();
+}
+
 function switchLanguage() {
   currentLang = currentLang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('tool_language', currentLang);
@@ -1300,6 +1378,12 @@ function selectFolder(inputId) {
 }
 
 window.addEventListener('load', () => {
+  // 检查是否已经选择过语言
+  const savedLang = localStorage.getItem('tool_language');
+  if (savedLang) {
+    currentLang = savedLang;
+    document.getElementById('langModal').classList.add('hidden');
+  }
   // 应用翻译
   applyTranslations();
   // 自动恢复保存的水印
@@ -1398,12 +1482,6 @@ function ppRebuildTable() {
     cb.onclick = e => { e.stopPropagation(); ppUpdateSelectAllState(); };
     tdCheck.appendChild(cb);
 
-    const tdThumb = document.createElement('td');
-    const img = document.createElement('img');
-    img.src = item.dataURL;
-    img.className = 'thumb-sm';
-    tdThumb.appendChild(img);
-
     const tdName = document.createElement('td');
     tdName.textContent = item.name;
     tdName.title = item.name;
@@ -1434,7 +1512,6 @@ function ppRebuildTable() {
     tdDel.appendChild(btn);
 
     tr.appendChild(tdCheck);
-    tr.appendChild(tdThumb);
     tr.appendChild(tdName);
     tr.appendChild(tdLevel);
     tr.appendChild(tdDel);
@@ -1833,9 +1910,17 @@ function cpLoadSavedWatermark() {
       document.getElementById('cp-wm-thumb').src = data.dataURL;
       document.getElementById('cp-wm-preview').style.display = 'block';
       document.getElementById('cp-wm-placeholder').style.display = 'none';
+      return;
     } catch (e) {
       console.error('恢复水印失败:', e);
     }
+  }
+  // 没有保存的水印，使用内置水印
+  if (BUILTIN_WATERMARK) {
+    cpWatermark = { name: 'builtin_watermark.png', dataURL: BUILTIN_WATERMARK, file: null };
+    document.getElementById('cp-wm-thumb').src = BUILTIN_WATERMARK;
+    document.getElementById('cp-wm-preview').style.display = 'block';
+    document.getElementById('cp-wm-placeholder').style.display = 'none';
   }
 }
 
