@@ -299,6 +299,11 @@ html, body {
   font-size: 13px;
   color: var(--white-2);
 }
+.level-desc .product-name {
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--red);
+}
 
 label {
   display: block;
@@ -780,23 +785,23 @@ input[type="checkbox"] {
         <div class="level-guide" id="pp-level-guide-content">
           <div class="level-item">
             <span class="level-number">1</span>
-            <span class="level-desc" id="pp-level-1">适用于 zeal mini 等小型产品</span>
+            <span class="level-desc" id="pp-level-1">适用于 <span class="product-name">zeal mini</span> 等小型产品</span>
           </div>
           <div class="level-item">
             <span class="level-number">2</span>
-            <span class="level-desc" id="pp-level-2">适用于 CHAMBER 这类中小型产品</span>
+            <span class="level-desc" id="pp-level-2">适用于 <span class="product-name">CHAMBER</span> 这类中小型产品</span>
           </div>
           <div class="level-item">
             <span class="level-number">3</span>
-            <span class="level-desc" id="pp-level-3">适用于 nimbus 这类具有三个风扇的中型产品</span>
+            <span class="level-desc" id="pp-level-3">适用于 <span class="product-name">nimbus</span> 这类具有三个风扇的中型产品</span>
           </div>
           <div class="level-item">
             <span class="level-number">4</span>
-            <span class="level-desc" id="pp-level-4">适用于大号的机箱，例如 ULTRACORE 这类产品</span>
+            <span class="level-desc" id="pp-level-4">适用于大号的机箱，例如 <span class="product-name">ULTRACORE</span> 这类产品</span>
           </div>
           <div class="level-item">
             <span class="level-number">5</span>
-            <span class="level-desc" id="pp-level-5">适用于最大号的机箱，例如 AETHER 这类产品</span>
+            <span class="level-desc" id="pp-level-5">适用于最大号的机箱，例如 <span class="product-name">AETHER</span> 这类产品</span>
           </div>
         </div>
       </div>
@@ -1113,11 +1118,11 @@ const translations = {
     'drag_files_here': '拖拽图片文件到这里',
     'support_batch': '支持批量拖入',
     'level_guide': '等级选择说明',
-    'level_1_desc': '适用于 zeal mini 等小型产品',
-    'level_2_desc': '适用于 CHAMBER 这类中小型产品',
-    'level_3_desc': '适用于 nimbus 这类具有三个风扇的中型产品',
-    'level_4_desc': '适用于大号的机箱，例如 ULTRACORE 这类产品',
-    'level_5_desc': '适用于最大号的机箱，例如 AETHER 这类产品',
+    'level_1_desc': '适用于 <span class="product-name">zeal mini</span> 等小型产品',
+    'level_2_desc': '适用于 <span class="product-name">CHAMBER</span> 这类中小型产品',
+    'level_3_desc': '适用于 <span class="product-name">nimbus</span> 这类具有三个风扇的中型产品',
+    'level_4_desc': '适用于大号的机箱，例如 <span class="product-name">ULTRACORE</span> 这类产品',
+    'level_5_desc': '适用于最大号的机箱，例如 <span class="product-name">AETHER</span> 这类产品',
     // Log messages
     'log_dir_selected': '已选择输出目录',
     'log_dir_select_failed': '选择目录失败',
@@ -1208,11 +1213,11 @@ const translations = {
     'drag_files_here': 'Drag images here',
     'support_batch': 'Batch drag supported',
     'level_guide': 'Level Selection Guide',
-    'level_1_desc': 'For small products like zeal mini',
-    'level_2_desc': 'For small-medium products like CHAMBER',
-    'level_3_desc': 'For medium products with 3 fans like nimbus',
-    'level_4_desc': 'For large cases like ULTRACORE',
-    'level_5_desc': 'For extra-large cases like AETHER',
+    'level_1_desc': 'For small products like <span class="product-name">zeal mini</span>',
+    'level_2_desc': 'For small-medium products like <span class="product-name">CHAMBER</span>',
+    'level_3_desc': 'For medium products with 3 fans like <span class="product-name">nimbus</span>',
+    'level_4_desc': 'For large cases like <span class="product-name">ULTRACORE</span>',
+    'level_5_desc': 'For extra-large cases like <span class="product-name">AETHER</span>',
     // Log messages
     'log_dir_selected': 'Output directory selected',
     'log_dir_select_failed': 'Failed to select directory',
@@ -1324,11 +1329,11 @@ function applyTranslations() {
   setText('#cp-clear-prod-btn', t('clear'));
   setText('#cp-clear-bg-btn', t('clear'));
   setText('#pp-level-guide', t('level_guide'));
-  setText('#pp-level-1', t('level_1_desc'));
-  setText('#pp-level-2', t('level_2_desc'));
-  setText('#pp-level-3', t('level_3_desc'));
-  setText('#pp-level-4', t('level_4_desc'));
-  setText('#pp-level-5', t('level_5_desc'));
+  setHTML('#pp-level-1', t('level_1_desc'));
+  setHTML('#pp-level-2', t('level_2_desc'));
+  setHTML('#pp-level-3', t('level_3_desc'));
+  setHTML('#pp-level-4', t('level_4_desc'));
+  setHTML('#pp-level-5', t('level_5_desc'));
   
   // Compose tab
   setText('#cp-guide-label', t('compose_guide'));
@@ -1367,6 +1372,10 @@ function applyTranslations() {
 function setText(selector, text) {
   const el = document.querySelector(selector);
   if (el) el.textContent = text;
+}
+function setHTML(selector, html) {
+  const el = document.querySelector(selector);
+  if (el) el.innerHTML = html;
 }
 
 function selectFolder(inputId) {
