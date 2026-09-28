@@ -1180,7 +1180,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.6</span>
+  <span class="header-version">v2.7</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -3225,14 +3225,40 @@ let gdDebugLines = [];             // 调试日志行
 let gdDebugCounts = { ok: 0, miss: 0, fail: 0 };  // 成功 / 未找到 / 失败计数
 let gdLoginGuardTimer = null;      // 登录安全计时器：GIS 无响应时兜底结束登录态
 
+// 幂等加载外部脚本：同一 src 只加载一次，重复调用复用同一个 Promise。
+// 否则 GIS 库被重复 append 会重复定义 google.accounts，可能导致 OAuth 行为异常。
+const gdScriptCache = new Map();
 function gdLoadScript(src) {
-  return new Promise((resolve, reject) => {
+  if (gdScriptCache.has(src)) return gdScriptCache.get(src);
+  const p = new Promise((resolve, reject) => {
+    const existing = [...document.querySelectorAll('script[src]')]
+      .find(s => s.src === src || s.getAttribute('src') === src);
+    if (existing) {
+      if (existing.dataset.loaded === '1') { resolve(); return; }
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error('load failed: ' + src)), { once: true });
+      return;
+    }
     const s = document.createElement('script');
     s.src = src; s.async = true;
-    s.onload = resolve;
+    s.onload = () => { s.dataset.loaded = '1'; resolve(); };
     s.onerror = () => reject(new Error('load failed: ' + src));
     document.head.appendChild(s);
   });
+  gdScriptCache.set(src, p);
+  return p;
+}
+
+// 确保 GIS 就绪：脚本加载完不一定立刻挂上 google.accounts（异步注册），
+// 这里轮询等待全局出现，最多 10s，避免"脚本已加载但 google 还没就绪"就 initTokenClient。
+async function gdEnsureGIS() {
+  if (window.google && google.accounts && google.accounts.oauth2) return;
+  await gdLoadScript('https://accounts.google.com/gsi/client');
+  for (let i = 0; i < 100; i++) {
+    if (window.google && google.accounts && google.accounts.oauth2) return;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  throw new Error('google.accounts.oauth2 未就绪');
 }
 
 async function gdDownloadBlob(it, key) {
@@ -3295,8 +3321,11 @@ function gdRefreshAuthUI() {
 
 async function gdLogin() {
   const cidInput = document.getElementById('gd-client-id');
-  const cid = cidInput.value.trim();
-  if (!cid.endsWith('.apps.googleusercontent.com')) {
+  // 严格清理：去掉首尾空白、内部空白、换行、不可见字符——带空格的 client_id 会让
+  // Google 直接判为 invalid_request（前端最隐蔽的一种 400 来源）
+  const cid = (cidInput.value || '').replace(/\s+/g, '');
+  cidInput.value = cid;
+  if (!/^[0-9A-Za-z_-]+\.apps\.googleusercontent\.com$/.test(cid)) {
     gdSheetShowError('gd_sheet_err_clientid');
     return;
   }
@@ -3316,14 +3345,15 @@ async function gdLogin() {
         gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', 'timeout'));
       }
     }, 60000);
-    // 每次主动登录都弹出账号选择器，绝不自动锁定当前/上次账号，也不使用 login_hint
+    // 只有官方支持的两个参数：prompt=select_account（每次弹账号选择器）、
+    // 以及空 callback（回调在 initTokenClient 里指定）。不要传 redirect_uri /
+    // response_type / login_hint / ux_mode 等——传了反而可能触发 invalid_request。
     gdTokenClient.requestAccessToken({ prompt: 'select_account' });
   };
 
   try {
-    if (!window.google || !google.accounts) {
-      await gdLoadScript('https://accounts.google.com/gsi/client');
-    }
+    await gdEnsureGIS();
+    // 只有"没有 client"或"client_id 变了"才重建，绝不重复初始化多个 tokenClient
     if (!gdTokenClient || gdTokenClientCid !== cid) {
       gdTokenClient = google.accounts.oauth2.initTokenClient({
         client_id: cid,
