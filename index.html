@@ -936,21 +936,34 @@ input[type="checkbox"] {
 }
 .gd-research-toggle:hover { color: var(--red-bright); }
 .gd-cand-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
-  gap: 7px; padding: 9px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px; padding: 9px;
 }
 .gd-cand {
-  display: flex; gap: 8px; align-items: center;
-  border: 1px solid var(--border); border-radius: 5px;
+  display: flex; flex-direction: column; gap: 4px; align-items: stretch;
+  border: 1px solid var(--border); border-radius: 6px;
   padding: 6px; cursor: pointer; background: var(--black-2);
+  position: relative; transition: border-color .12s, background .12s;
 }
 .gd-cand:hover { border-color: var(--red); }
-.gd-cand.picked { border-color: var(--red); background: var(--red-dim); }
+.gd-cand.picked { border-color: var(--red-bright); background: var(--red-dim); box-shadow: 0 0 0 1px var(--red-bright) inset; }
+.gd-cand input[type="checkbox"] { position: absolute; top: 8px; left: 8px; z-index: 2; width: 16px; height: 16px; cursor: pointer; }
 .gd-cand img {
-  width: 42px; height: 42px; object-fit: contain; flex-shrink: 0;
-  background: var(--black-5); border-radius: 3px; cursor: zoom-in;
+  width: 100%; height: 108px; object-fit: contain; flex-shrink: 0;
+  background: var(--black-5); border-radius: 4px; cursor: zoom-in; display: block;
+}
+.gd-cand.thumb-broken img,
+.gd-cand img.gd-thumb-broken {
+  background: repeating-linear-gradient(45deg, var(--black-5), var(--black-5) 6px, var(--black-3) 6px, var(--black-3) 12px);
+  border: 1px dashed var(--white-4); cursor: zoom-in;
+}
+.gd-cand.thumb-broken .gd-cand-info::before {
+  content: '图片加载失败'; display: block; font-size: 10px; color: var(--yellow);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .gd-cand-info { min-width: 0; }
+.gd-sgroup-empty { padding: 9px 12px; font-size: 11px; color: var(--white-4); }
+.gd-sgroup-err { padding: 6px 12px 2px; font-size: 11px; color: var(--red-bright); word-break: break-all; }
 .gd-cand-name { display: block; font-size: 10px; color: var(--white-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gd-cand-add { font-size: 10px; color: var(--white-4); }
 .gd-cand.picked .gd-cand-add { color: var(--red-bright); font-weight: 700; }
@@ -1204,7 +1217,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.11</span>
+  <span class="header-version">v2.12</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -1776,6 +1789,8 @@ const translations = {
     'gd_added': '✓ 已选择',
     'gd_add_group': '本组全选',
     'gd_zoom_hint': '点缩略图看大图',
+    'gd_group_none_cands': '这个产品没有找到候选图片（可点上方「换词重搜」）',
+    'gd_group_err_prefix': '搜索失败：',
     'gd_lb_loading': '正在加载大图…',
     'gd_lb_fail': '大图加载失败',
     'gd_miss_show': '▼ {n} 个产品没找到，可在各自卡片里换关键词重搜，点击查看清单',
@@ -2011,6 +2026,8 @@ const translations = {
     'gd_added': '✓ Selected',
     'gd_add_group': 'Select all in group',
     'gd_zoom_hint': 'Click thumbnail to view large',
+    'gd_group_none_cands': 'No candidate images found for this product (use "Re-search" above)',
+    'gd_group_err_prefix': 'Search failed: ',
     'gd_lb_loading': 'Loading large image…',
     'gd_lb_fail': 'Failed to load large image',
     'gd_miss_show': '▼ {n} product(s) not found — re-search each with a new keyword; click for the list',
@@ -3005,25 +3022,27 @@ function gdOpen(target) {
   gdFolderMap = new Map();
 
   // 每次打开都从"上传表格 → 识别产品 → 搜图 → 选图 → 导入"流程头开始
-  document.getElementById('gd-client-id').value = localStorage.getItem('gdrive_client_id') || '';
-  document.getElementById('gd-sheet-folder').value = '';
+  const cidEl = document.getElementById('gd-client-id');
+  if (cidEl) cidEl.value = localStorage.getItem('gdrive_client_id') || '';
+  const folderInputEl = document.getElementById('gd-sheet-folder');
+  if (folderInputEl) folderInputEl.value = '';
   gdSheetAOA = [];
   gdSheetFileName = '';
-  document.getElementById('gd-sheet-refresh').style.display = 'none';
+  gdSetStyle('gd-sheet-refresh', 'display', 'none');
   gdProdList = [];
   gdRecognized = false;
   gdRows = [];
   gdSheetDone = false;
   gdSheetRunning = false;
   gdSheetImporting = false;
-  document.getElementById('gd-col-config').style.display = 'none';
-  document.getElementById('gd-prod-list').style.display = 'none';
-  document.getElementById('gd-sheet-run').disabled = true;
-  document.getElementById('gd-sheet-meta').textContent = '';
-  document.getElementById('gd-sheet-results').innerHTML = '';
-  document.getElementById('gd-miss-toggle').style.display = 'none';
-  document.getElementById('gd-sheet-stat').textContent = '';
-  document.getElementById('gd-review-counts').textContent = '';
+  gdSetStyle('gd-col-config', 'display', 'none');
+  gdSetStyle('gd-prod-list', 'display', 'none');
+  gdSetStyle('gd-sheet-run', 'disabled', true);
+  gdSetText('gd-sheet-meta', '');
+  gdSetHTML('gd-sheet-results', '');
+  gdSetStyle('gd-miss-toggle', 'display', 'none');
+  gdSetText('gd-sheet-stat', '');
+  gdSetText('gd-review-counts', '');
   gdCloseLightbox();
   gdSheetView = 'setup';
   gdSheetShowView('setup');
@@ -3222,8 +3241,9 @@ async function gdCollectFolderIds(rootId, key, recursive) {
         ids.push(f.id);
       });
       pageToken = data.nextPageToken || '';
-      document.getElementById('gd-progress-text').textContent =
-        t('gd_scanning').replace('{n}', ids.length - 1);
+      // 进度文字：review 区仍复用扫描进度（若节点不存在则跳过，绝不因缺元素中断）
+      const scanEl = document.getElementById('gd-sheet-progress-text');
+      if (scanEl) scanEl.textContent = t('gd_scanning').replace('{n}', ids.length - 1);
     } while (pageToken && ++guard < 2000);
   }
   gdFolderMap = map;
@@ -3262,6 +3282,7 @@ let gdSheetBaseQ = '';            // 本次全量搜索的公共查询条件（�
 let gdSheetLastOk = 0;              // 上次加载成功张数（用于语言切换后重画统计）
 let gdSheetLastFailedNames = [];    // 上次加载失败的文件名
 let gdThumbCache = new Map();
+let gdThumbFailed = new Set();     // 加载失败过的 fileId，避免反复重试
 let gdThumbObserver = null;
 let gdLb = { ri: -1, ci: -1, seq: 0 }; // 大图灯箱当前看的组/候选，seq 防止异步串台
 let gdLbKeyBound = false;
@@ -3459,6 +3480,7 @@ function gdLogout() {
 // ── 错误提示 ───────────────────────────────
 function gdSheetShowError(key, detail, oauthErr) {
   const box = document.getElementById('gd-sheet-err');
+  if (!box) return;   // 节点不存在时静默跳过，不让 UI 提示本身成为中断源
   const head = key ? t(key) : (detail || t('error'));
   let html = gdEscape(head);
   if (key && detail) html += `<span class="gd-err-detail">${gdEscape(detail)}</span>`;
@@ -3513,7 +3535,8 @@ function gdRenderDebug() {
   }
 }
 function gdSheetClearError() {
-  document.getElementById('gd-sheet-err').style.display = 'none';
+  const box = document.getElementById('gd-sheet-err');
+  if (box) box.style.display = 'none';
 }
 
 // ── 表格解析 ───────────────────────────────
@@ -3551,7 +3574,7 @@ async function gdSheetPicked(file) {
     gdSheetAOA = aoa;
     gdSheetFileName = file.name;
     gdSheetApplyAOA();
-    document.getElementById('gd-sheet-refresh').style.display = '';
+    gdSetStyle('gd-sheet-refresh', 'display', '');
     meta.style.color = '#4ade80';
     meta.textContent = '📄 ' + file.name + ' · ' +
       t('gd_sheet_loaded').replace('{n}', gdSheetDataRows().length);
@@ -3583,20 +3606,20 @@ function gdSheetApplyAOA(keepCols) {
   // 产品列表作废：隐藏列表 + 禁用搜索，等用户点「识别产品」
   gdProdList = [];
   gdRecognized = false;
-  document.getElementById('gd-prod-list').style.display = 'none';
-  document.getElementById('gd-sheet-run').disabled = true;
+  gdSetStyle('gd-prod-list', 'display', 'none');
+  gdSetStyle('gd-sheet-run', 'disabled', true);
 
-  document.getElementById('gd-col-config').style.display = '';
+  gdSetStyle('gd-col-config', 'display', '');
   // 重新解析后，旧的搜索结果、选择状态、结果页统计全部作废，回到设置页等用户确认列
   gdSheetDone = false;
   gdRows = [];
   gdSheetView = 'setup';
   gdSheetShowView('setup');
   gdSetActiveSteps(2);
-  document.getElementById('gd-sheet-results').innerHTML = '';
-  document.getElementById('gd-miss-toggle').style.display = 'none';
-  document.getElementById('gd-sheet-stat').textContent = '';
-  document.getElementById('gd-review-counts').textContent = '';
+  gdSetHTML('gd-sheet-results', '');
+  gdSetStyle('gd-miss-toggle', 'display', 'none');
+  gdSetText('gd-sheet-stat', '');
+  gdSetText('gd-review-counts', '');
   gdSyncFooter();
 }
 
@@ -3609,8 +3632,8 @@ function gdRecognizeProducts() {
   gdBuildProdList();
   gdRenderProdList();
   gdRecognized = true;
-  document.getElementById('gd-prod-list').style.display = '';
-  document.getElementById('gd-sheet-run').disabled = gdProdList.filter(p => !p.dup).length === 0;
+  gdSetStyle('gd-prod-list', 'display', '');
+  gdSetStyle('gd-sheet-run', 'disabled', gdProdList.filter(p => !p.dup).length === 0);
   gdDebug('info', '已识别产品：' + gdProdList.filter(p => !p.dup).length + ' 项（共 ' + gdProdList.length + ' 行）');
 }
 
@@ -3704,8 +3727,8 @@ function gdColChanged() {
   gdRenderPreview();
   gdProdList = [];
   gdRecognized = false;
-  document.getElementById('gd-prod-list').style.display = 'none';
-  document.getElementById('gd-sheet-run').disabled = true;
+  gdSetStyle('gd-prod-list', 'display', 'none');
+  gdSetStyle('gd-sheet-run', 'disabled', true);
 }
 
 // Step 2：把表格数据行整理成产品列表，每个产品带一个可改"搜索关键词"，并按关键词去重
@@ -3783,8 +3806,8 @@ function gdSetActiveSteps(n) {
 // 设置页 / 结果页切换（统一流程内部的两阶段）
 function gdSheetShowView(view) {
   gdSheetView = view;
-  document.getElementById('gd-sheet-setup').style.display = view === 'setup' ? '' : 'none';
-  document.getElementById('gd-sheet-review').style.display = view === 'review' ? '' : 'none';
+  gdSetStyle('gd-sheet-setup', 'display', view === 'setup' ? '' : 'none');
+  gdSetStyle('gd-sheet-review', 'display', view === 'review' ? '' : 'none');
   gdSyncFooter();
 }
 function gdSheetBackToSetup() {
@@ -3834,6 +3857,20 @@ function gdBuildBaseQuery(folderIds) {
   return q;
 }
 
+// ── 安全 DOM 写入：节点不存在时静默跳过，绝不让单个缺失节点中断整个搜索流程 ──
+function gdSetText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+function gdSetHTML(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = val;
+}
+function gdSetStyle(id, prop, val) {
+  const el = document.getElementById(id);
+  if (el) el.style[prop] = val;
+}
+
 async function gdSheetSearch() {
   gdSheetClearError();
   if (!gdToken) {
@@ -3844,7 +3881,8 @@ async function gdSheetSearch() {
   }
 
   // 可选文件夹
-  const folderRaw = document.getElementById('gd-sheet-folder').value.trim();
+  const folderEl = document.getElementById('gd-sheet-folder');
+  const folderRaw = folderEl ? folderEl.value.trim() : '';
   if (folderRaw) {
     const fid = gdParseFolderId(folderRaw);
     if (!fid) { gdSheetShowError('gd_sheet_err_folder'); gdSheetShowView('setup'); return; }
@@ -3857,7 +3895,7 @@ async function gdSheetSearch() {
   // 全新搜索：清空旧候选与选择
   gdRows = products.map(p => ({
     sku: p.sku, model: p.model, name: p.name, keyword: p.keyword,
-    status: 'searching', cands: [],
+    status: 'searching', cands: [], errorMsg: '',
     hitKeyword: '', resInput: '', researchOpen: false, researching: false
   }));
   gdSheetRunning = true;
@@ -3868,12 +3906,12 @@ async function gdSheetSearch() {
   gdSearchTimers = [];
   gdDebugCounts = { ok: 0, miss: 0, fail: 0 };
   gdCloseLightbox();
-  document.getElementById('gd-sheet-results').innerHTML = '';
-  document.getElementById('gd-miss-toggle').style.display = 'none';
-  document.getElementById('gd-sheet-stat').textContent = '';
-  document.getElementById('gd-sheet-progress').style.display = 'block';
-  document.getElementById('gd-sheet-progress-bar').style.width = '0%';
-  document.getElementById('gd-sheet-run').disabled = true;
+  gdSetHTML('gd-sheet-results', '');
+  gdSetStyle('gd-miss-toggle', 'display', 'none');
+  gdSetText('gd-sheet-stat', '');
+  gdSetStyle('gd-sheet-progress', 'display', 'block');
+  gdSetStyle('gd-sheet-progress-bar', 'width', '0%');
+  gdSetStyle('gd-sheet-run', 'disabled', true);
   gdSheetShowView('review');   // 搜索一开始就进入结果页，进度和每组结果在同一页呈现
   gdSetActiveSteps(3);
   gdSyncFooter();
@@ -3905,9 +3943,9 @@ async function gdSheetSearch() {
         const qLabel = row.keyword || row.sku || row.model || row.name;
         // 实时进度：正在搜索 X / N：SKU/关键词
         gdDebug('search', t('gd_debug_cur').replace('{x}', done + 1).replace('{n}', total).replace('{q}', qLabel));
-        document.getElementById('gd-sheet-progress-text').textContent =
+        gdSetText('gd-sheet-progress-text',
           t('gd_sheet_searching').replace('{x}', done).replace('{n}', total)
-            .replace('{q}', qLabel.length > 36 ? qLabel.slice(0, 36) + '…' : qLabel);
+            .replace('{q}', qLabel.length > 36 ? qLabel.slice(0, 36) + '…' : qLabel));
 
         // 同一行最多尝试 6 次：限流/网络抖动就在原地等一等再试，不去动公共游标
         let fatal = false;
@@ -3974,6 +4012,7 @@ async function gdSheetSearch() {
             if (err.status === 404) {
               // 某个资源/文件夹不存在：本组当作未找到，继续下一个产品，不卡死
               row.status = 'none'; row.cands = [];
+              row.errorMsg = err.message || '404';
               gdDebugCounts.miss++;
               gdDebug('miss', t('gd_debug_404').replace('{q}', qLabel));
               break;
@@ -3991,6 +4030,7 @@ async function gdSheetSearch() {
               continue;
             }
             row.status = 'none'; row.cands = [];
+            row.errorMsg = err.message || String(err);   // 在对应产品下显示失败原因
             gdDebugCounts.fail++;
             gdDebug('error', t('gd_debug_fail').replace('{q}', qLabel).replace('{e}', err.message));
             break;
@@ -3999,9 +4039,9 @@ async function gdSheetSearch() {
         if (fatal) return;
 
         done++;
-        document.getElementById('gd-sheet-progress-bar').style.width = Math.round(done / total * 100) + '%';
-        document.getElementById('gd-sheet-progress-text').textContent =
-          t('gd_sheet_searching').replace('{x}', done).replace('{n}', total).replace('{q}', '');
+        gdSetStyle('gd-sheet-progress-bar', 'width', Math.round(done / total * 100) + '%');
+        gdSetText('gd-sheet-progress-text',
+          t('gd_sheet_searching').replace('{x}', done).replace('{n}', total).replace('{q}', ''));
         gdRenderGroup(ri);
         gdUpdateSheetStat();
       }
@@ -4032,8 +4072,8 @@ async function gdSheetSearch() {
     if (gdAbortCtrl) { try { gdAbortCtrl.abort(); } catch (_) {} gdAbortCtrl = null; }
     gdSearchTimers.forEach(t => clearTimeout(t));
     gdSearchTimers = [];
-    document.getElementById('gd-sheet-run').disabled = false;
-    document.getElementById('gd-sheet-progress').style.display = 'none';
+    gdSetStyle('gd-sheet-run', 'disabled', false);
+    gdSetStyle('gd-sheet-progress', 'display', 'none');
     // 注意不能把 gdSheetDone 置 true：它表示"已加载到产品列表"，查完只是挑选阶段，
     // 底部按钮必须保持"加载选中图片到产品列表（N 张）"，否则用户就没地方点加载了。
     gdSheetDone = false;
@@ -4083,6 +4123,11 @@ function gdGroupHTML(ri) {
         <span>${gdEscape(t('gd_add_group'))}</span></label>` : ''}
     </div>`;
 
+  // 失败原因一行（仅当该产品搜索异常时显示，明确告诉用户为什么这组没图）
+  const errLine = (!row.researching && row.errorMsg)
+    ? `<div class="gd-sgroup-err">⚠ ${gdEscape(t('gd_group_err_prefix'))}${gdEscape(row.errorMsg)}</div>`
+    : '';
+
   // 命中关键词一行（让用户知道这组图是拿哪个词搜出来的）+ 换词重搜入口
   let kwLine = '';
   if (!row.researching && row.status !== 'searching' && row.hitKeyword) {
@@ -4096,13 +4141,13 @@ function gdGroupHTML(ri) {
   const grid = row.cands.length ? `<div class="gd-cand-grid">` + row.cands.map((c, ci) => `
     <label class="gd-cand ${c.picked ? 'picked' : ''}" data-ri="${ri}" data-ci="${ci}">
       <input type="checkbox" ${c.picked ? 'checked' : ''} onchange="gdToggleCand(${ri},${ci},this.checked)">
-      <img data-thumb="${gdEscape(c.id)}" alt="" title="${gdEscape(t('gd_zoom_hint'))}"
+      <img data-thumb="${gdEscape(c.id)}" alt="${gdEscape(c.name)}" title="${gdEscape(t('gd_zoom_hint'))}"
         onclick="event.preventDefault();event.stopPropagation();gdOpenLightbox(${ri},${ci})">
       <span class="gd-cand-info">
         <span class="gd-cand-name" title="${gdEscape(c.name)}">${gdEscape(c.name)}</span>
         <span class="gd-cand-add">${c.picked ? gdEscape(t('gd_added')) : '☐ ' + gdEscape(t('gd_select_one'))}</span>
       </span>
-    </label>`).join('') + '</div>' : '';
+    </label>`).join('') + '</div>' : `<div class="gd-sgroup-empty">${gdEscape(t('gd_group_none_cands'))}</div>`;
 
   // 单组重搜条：未找到的组默认展开输入框；已找到的组点"换词重搜"才展开
   let research = '';
@@ -4118,7 +4163,7 @@ function gdGroupHTML(ri) {
       </div>`;
   }
 
-  return `<div class="gd-sgroup ${row.researching ? 'researching' : ''}" data-group="${ri}">${head}${kwLine}${grid}${research}</div>`;
+  return `<div class="gd-sgroup ${row.researching ? 'researching' : ''}" data-group="${ri}">${head}${errLine}${kwLine}${grid}${research}</div>`;
 }
 
 function gdRenderGroup(ri) {
@@ -4218,9 +4263,12 @@ async function gdRowResearch(ri) {
     row.cands = [...uniq.values()];
     row.status = files.length ? 'kw' : 'none';
     row.hitKeyword = files.length ? kw : '';
+    row.errorMsg = '';                      // 重搜成功：清掉上一次的错误提示
   } catch (e) {
     const err = gdNormErr(e);
     if (err.aborted) { row.researching = false; gdRenderGroup(ri); return; }
+    // 在对应产品下显示失败原因（不中断整轮流程）
+    row.errorMsg = err.message || String(e);
     if (err.status === 401 || err.status === 403) {
       gdSheetShowError('gd_token_expired', err.message);
     } else {
@@ -4251,13 +4299,15 @@ function gdSheetPickedList() {
 function gdOpenLightbox(ri, ci) {
   if (!gdRows[ri] || !gdRows[ri].cands[ci]) return;
   gdLb = { ri, ci, seq: gdLb.seq + 1 };
-  document.getElementById('gd-lightbox').classList.add('show');
+  const lbEl = document.getElementById('gd-lightbox');
+  if (lbEl) lbEl.classList.add('show');
   gdLbRender();
   // 键盘：Esc 关、← → 切换（只绑一次）
   if (!gdLbKeyBound) {
     gdLbKeyBound = true;
     document.addEventListener('keydown', e => {
-      if (!document.getElementById('gd-lightbox').classList.contains('show')) return;
+      const lb = document.getElementById('gd-lightbox');
+      if (!lb || !lb.classList.contains('show')) return;
       if (e.key === 'Escape') gdCloseLightbox();
       else if (e.key === 'ArrowLeft') gdLightboxStep(-1);
       else if (e.key === 'ArrowRight') gdLightboxStep(1);
@@ -4284,8 +4334,9 @@ async function gdLbRender() {
   if (!c) return;
   const img = document.getElementById('gd-lb-img');
   const hint = document.getElementById('gd-lb-hint');
-  document.getElementById('gd-lb-name').textContent = c.name;
-  document.getElementById('gd-lb-pos').textContent = `${gdLb.ci + 1} / ${row.cands.length}`;
+  if (!img || !hint) return;
+  gdSetText('gd-lb-name', c.name);
+  gdSetText('gd-lb-pos', `${gdLb.ci + 1} / ${row.cands.length}`);
   if (c.objUrl) { img.src = c.objUrl; hint.textContent = ''; return; }
   img.removeAttribute('src');
   hint.textContent = t('gd_lb_loading');
@@ -4328,16 +4379,20 @@ function gdUpdateSheetStat() {
   const list = document.getElementById('gd-miss-list');
   const missing = gdRows.filter(r => r.status === 'none');
   if (missing.length && !gdSheetRunning) {
-    toggle.style.display = '';
-    toggle.textContent = t('gd_miss_show').replace('{n}', missing.length);
-    list.innerHTML = missing.map(r => {
-      const head = gdEscape(r.sku || r.model || r.name);
-      const sub = r.name && r.sku ? ' <span style="color:var(--white-4)">(' + gdEscape(r.name) + ')</span>' : '';
-      return '· ' + head + sub;
-    }).join('<br>');
+    if (toggle) {
+      toggle.style.display = '';
+      toggle.textContent = t('gd_miss_show').replace('{n}', missing.length);
+    }
+    if (list) {
+      list.innerHTML = missing.map(r => {
+        const head = gdEscape(r.sku || r.model || r.name);
+        const sub = r.name && r.sku ? ' <span style="color:var(--white-4)">(' + gdEscape(r.name) + ')</span>' : '';
+        return '· ' + head + sub;
+      }).join('<br>');
+    }
   } else {
-    toggle.style.display = 'none';
-    list.style.display = 'none';
+    if (toggle) toggle.style.display = 'none';
+    if (list) list.style.display = 'none';
   }
 }
 
@@ -4354,6 +4409,7 @@ function gdToggleMiss() {
 // 私有图片缩略图要带令牌请求，懒加载 + 内存缓存
 function gdInitThumbObserver() {
   const root = document.getElementById('gd-sheet-results');
+  if (!root) return;
   if (!gdThumbObserver) {
     gdThumbObserver = new IntersectionObserver(entries => {
       entries.forEach(en => {
@@ -4362,30 +4418,58 @@ function gdInitThumbObserver() {
         gdThumbObserver.unobserve(img);
         const id = img.dataset.thumb;
         if (!id) return;
-        gdLoadThumb(id).then(url => { img.src = url; }).catch(() => {});
+        gdLoadThumb(id).then(url => { img.src = url; })
+          .catch(err => gdThumbFail(img, err));
       });
-    }, { root, rootMargin: '120px' });
+    }, { root, rootMargin: '200px' });
   }
   gdThumbObserver.disconnect();
   root.querySelectorAll('img[data-thumb]').forEach(img => {
     const id = img.dataset.thumb;
-    if (gdThumbCache.has(id)) img.src = gdThumbCache.get(id);
-    else gdThumbObserver.observe(img);
+    if (gdThumbCache.has(id)) { img.src = gdThumbCache.get(id); return; }
+    if (gdThumbFailed.has(id)) { gdThumbFail(img); return; }
+    gdThumbObserver.observe(img);
   });
+}
+
+// 缩略图加载失败：不留下空白，明确显示"图片加载失败"，点击仍可看大图
+function gdThumbFail(img, err) {
+  if (err) console.warn('Thumbnail failed:', img && img.dataset.thumb, err && err.message);
+  if (img && img.dataset.thumb) gdThumbFailed.add(img.dataset.thumb);
+  if (!img) return;
+  img.classList.add('gd-thumb-broken');
+  img.removeAttribute('data-thumb');
+  const card = img.closest('.gd-cand');
+  if (card) card.classList.add('thumb-broken');
 }
 
 async function gdLoadThumb(id) {
   if (gdThumbCache.has(id)) return gdThumbCache.get(id);
-  // 表格模式只走 OAuth 令牌（私有文件），缩略图必须带 Bearer 授权
-  const url = `${GD_API}/files/${encodeURIComponent(id)}/thumbnail?supportsAllDrives=true`;
+  if (gdThumbFailed.has(id)) throw new Error('thumb previously failed');
+  // 表格模式只走 OAuth 令牌（私有文件），缩略图必须带 Bearer 授权。
+  // 依次尝试多个 Drive 图片端点，任意一个成功即可。
+  const endpoints = [
+    `${GD_API}/files/${encodeURIComponent(id)}/thumbnail?sz=w320&supportsAllDrives=true`,
+    `${GD_API}/files/${encodeURIComponent(id)}/thumbnail?supportsAllDrives=true`,
+    `${GD_API}/files/${encodeURIComponent(id)}?alt=media&supportsAllDrives=true`
+  ];
   const headers = {};
   if (gdToken) headers['Authorization'] = 'Bearer ' + gdToken;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error('thumb ' + res.status);
-  const blob = await res.blob();
-  const objUrl = URL.createObjectURL(blob);
-  gdThumbCache.set(id, objUrl);
-  return objUrl;
+  let lastErr = null;
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url, { headers });
+      if (!res.ok) { lastErr = new Error('thumb ' + res.status); continue; }
+      const blob = await res.blob();
+      if (!blob || !blob.size) { lastErr = new Error('empty blob'); continue; }
+      const objUrl = URL.createObjectURL(blob);
+      gdThumbCache.set(id, objUrl);
+      return objUrl;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('thumb unavailable');
 }
 
 // ── 导入已添加的图片 ───────────────────────────────
@@ -4396,9 +4480,9 @@ async function gdSheetImport() {
   gdSheetImporting = true;
   gdAbort = false;
   gdCloseLightbox();
-  document.getElementById('gd-sheet-err').style.display = 'none';
-  document.getElementById('gd-sheet-progress').style.display = 'block';
-  document.getElementById('gd-sheet-progress-bar').style.width = '0%';
+  gdSheetClearError();
+  gdSetStyle('gd-sheet-progress', 'display', 'block');
+  gdSetStyle('gd-sheet-progress-bar', 'width', '0%');
   gdSyncFooter();
 
   const total = picked.length;
@@ -4409,9 +4493,9 @@ async function gdSheetImport() {
     while (cursor < total) {
       if (gdAbort) return;
       const cand = picked[cursor++];
-      document.getElementById('gd-sheet-progress-text').textContent =
+      gdSetText('gd-sheet-progress-text',
         t('gd_importing').replace('{x}', finished).replace('{y}', total)
-          .replace('{name}', cand.name.length > 36 ? cand.name.slice(0, 36) + '…' : cand.name);
+          .replace('{name}', cand.name.length > 36 ? cand.name.slice(0, 36) + '…' : cand.name));
       try {
         // 灯箱里看过的原图已经缓存，直接复用，不重复下载
         if (!cand.blob) cand.blob = await gdDownloadBlob(cand, '');
@@ -4421,7 +4505,7 @@ async function gdSheetImport() {
         console.error('Sheet import download failed:', cand.name, e);
       }
       finished++;
-      document.getElementById('gd-sheet-progress-bar').style.width = Math.round(finished / total * 100) + '%';
+      gdSetStyle('gd-sheet-progress-bar', 'width', Math.round(finished / total * 100) + '%');
     }
   }
   await Promise.all([worker(), worker(), worker(), worker()]);
@@ -4452,7 +4536,7 @@ async function gdSheetImport() {
   gdSheetImporting = false;
   gdSheetDone = true;
   gdSetActiveSteps(5);   // 已加载到产品列表，整条流程走完
-  document.getElementById('gd-sheet-progress').style.display = 'none';
+  gdSetStyle('gd-sheet-progress', 'display', 'none');
   // 记住结果，语言切换时用新语言重画这行
   gdSheetLastOk = files.length;
   gdSheetLastFailedNames = failedNames.slice();
@@ -4462,12 +4546,12 @@ async function gdSheetImport() {
 
 // 导入完成后的结果统计（单独放一个函数，中英切换后可原样重画）
 function gdRenderImportedStat() {
-  document.getElementById('gd-sheet-stat').innerHTML =
+  gdSetHTML('gd-sheet-stat',
     gdEscape(t('gd_sheet_stat_done').replace('{x}', gdSheetLastOk)) +
     (gdSheetLastFailedNames.length
       ? `<br><span style="color:var(--red-bright)">${gdEscape(t('gd_failed_title'))} ` +
         gdEscape(gdSheetLastFailedNames.join(currentLang === 'zh' ? '、' : ', ')) + '</span>'
-      : '');
+      : ''));
 }
 
 </script>
