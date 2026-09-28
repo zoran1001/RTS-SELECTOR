@@ -15,3 +15,8 @@ node_modules/
 # Build outputs
 dist/
 build/
+
+# OAuth secret — 绝不提交（含 client_secret 的文件）
+client_secret_*.json
+OAuth id.txt
+oauth.png
