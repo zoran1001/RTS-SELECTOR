@@ -1180,7 +1180,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.8</span>
+  <span class="header-version">v2.9</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -3355,6 +3355,8 @@ async function gdLogin() {
         gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', 'timeout'));
       }
     }, 60000);
+    // 把即将发起的 origin 记进调试日志，方便和 Console 白名单比对
+    gdDebug('oauth', 'requestAccessToken origin = ' + window.location.origin);
     // 只有官方支持的两个参数：prompt=select_account（每次弹账号选择器）、
     // 以及空 callback（回调在 initTokenClient 里指定）。不要传 redirect_uri /
     // response_type / login_hint / ux_mode 等——传了反而可能触发 invalid_request。
@@ -3381,7 +3383,7 @@ async function gdLogin() {
             gdToken = null;
             gdRefreshAuthUI();
             if (resp.error !== 'popup_closed' && resp.error !== 'access_denied') {
-              gdSheetShowError('', gdOAuthErrText(resp));
+              gdSheetShowError('', gdOAuthErrText(resp), true);
             }
             gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', gdOAuthErrText(resp)));
           }
@@ -3392,7 +3394,7 @@ async function gdLogin() {
           gdRefreshAuthUI();
           if (err && err.type === 'popup_closed') return; // 用户关掉弹窗，不算错误
           // 把 Google 返回的 error / error_description / type 原样显示在 UI（需求 #8/#9）
-          gdSheetShowError('', gdOAuthErrText(err));
+          gdSheetShowError('', gdOAuthErrText(err), true);
           gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', gdOAuthErrText(err)));
         }
       });
@@ -3402,7 +3404,7 @@ async function gdLogin() {
   } catch (e) {
     if (gdLoginGuardTimer) { clearTimeout(gdLoginGuardTimer); gdLoginGuardTimer = null; }
     console.error('GIS load failed:', e);
-    gdSheetShowError('', t('gd_login_loadfail') + (e && (e.message || e.error_description) || e));
+    gdSheetShowError('', t('gd_login_loadfail') + (e && (e.message || e.error_description) || e), true);
     gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', 'gsi_load: ' + (e && (e.message || e.error_description) || e)));
   }
 }
@@ -3414,7 +3416,7 @@ function gdLogout() {
 }
 
 // ── 错误提示 ───────────────────────────────
-function gdSheetShowError(key, detail) {
+function gdSheetShowError(key, detail, oauthErr) {
   const box = document.getElementById('gd-sheet-err');
   const head = key ? t(key) : (detail || t('error'));
   let html = gdEscape(head);
@@ -3423,8 +3425,19 @@ function gdSheetShowError(key, detail) {
   if (key === 'gd_token_expired') {
     html += `<button class="gd-err-btn" onclick="gdLogin()">${gdEscape(t('gd_relogin'))}</button>`;
   }
+  // 登录类失败：附上当前 origin，方便对照 Console 白名单（invalid_request 最常见原因）
+  if (key === '' && oauthErr) html += gdOriginHint();
   box.innerHTML = html;
   box.style.display = 'block';
+}
+
+// 登录失败时补一段"当前 origin vs 需配置的 origin"诊断，直接告诉用户该往 Console 填什么
+function gdOriginHint() {
+  const o = window.location.origin;
+  const zh = currentLang === 'zh';
+  return zh
+    ? `<span class="gd-err-detail">当前 OAuth 来源：<code>${gdEscape(o)}</code> —— 请确认这个字符串已原样加入 Console → 凭据 → 该 Web 客户端 → 「已授权的 JavaScript 来源」（不含路径）。</span>`
+    : `<span class="gd-err-detail">Current OAuth origin: <code>${gdEscape(o)}</code> — make sure this exact string is added to Console → Credentials → your Web client → "Authorized JavaScript origins" (no path).</span>`;
 }
 
 // ── 调试日志（UI 可见，不只靠 console） ──────
