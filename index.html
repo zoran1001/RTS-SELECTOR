@@ -1180,7 +1180,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.7</span>
+  <span class="header-version">v2.8</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -1714,7 +1714,7 @@ const translations = {
     'gd_logout': '退出登录',
     'gd_auth_no': '未登录',
     'gd_auth_ok': '已登录 · 只读权限',
-    'gd_oauth_help_html': '不用改文件夹共享权限，用你自己账号登录就能搜。首次配置约 5 分钟：① 在<a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">谷歌云控制台</a>配置「OAuth 同意屏幕」（选外部，把你自己邮箱加到测试用户）；② 在<a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">客户端页面</a>创建「<b>网页应用</b>」客户端，把本工具网址加到「已授权的 JavaScript 来源」：本地填 <code>http://localhost:8765</code>（若用 127.0.0.1 访问，需另加 <code>http://127.0.0.1:8765</code>），GitHub Pages 填 <code>https://zoran1001.github.io</code>（<b>不含 /RTS-SELECTOR/ 路径</b>，来源只看域名）。复制客户端 ID 填到上面；③ 登录出现"Google 未验证"提示，点「高级 → 继续前往」即可，只有你自己用。当前运行来源见上方"当前 OAuth 来源"。',
+    'gd_oauth_help_html': '不用改文件夹共享权限，用你自己账号登录就能搜。首次配置约 5 分钟：① 在<a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">谷歌云控制台</a>配置「OAuth 同意屏幕」（选外部，把你自己邮箱加到测试用户）；② 在<a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">客户端页面</a>创建「<b>网页应用</b>」客户端，把本工具网址加到「已授权的 JavaScript 来源」：本地填 <code>http://localhost:8765</code>（若用 127.0.0.1 访问，需另加 <code>http://127.0.0.1:8765</code>），GitHub Pages 填 <code>https://zoran1001.github.io</code>（<b>不含 /RTS-SELECTOR/ 路径</b>，来源只看域名）。复制客户端 ID 填到上面；③ 登录出现"Google 未验证"提示，点「高级 → 继续前往」即可，只有你自己用。<b>⚠ 企业/Workspace 账号（如 @公司域名）会因 Google OAuth 政策被拦（报 invalid_request），请改用个人 Gmail 账号，或改从 https 地址访问。</b>当前运行来源见上方"当前 OAuth 来源"。',
     'gd_sheet_step1': '① 限定文件夹（可选，不填＝搜你账号能看到的所有云盘）',
     'gd_sheet_folder_ph': '可选：粘贴文件夹链接，搜索范围只限这里',
     'gd_sheet_step2': '② 上传表格（Excel / CSV）',
@@ -1944,7 +1944,7 @@ const translations = {
     'gd_logout': 'Sign out',
     'gd_auth_no': 'Not signed in',
     'gd_auth_ok': 'Signed in · read-only',
-    'gd_oauth_help_html': 'No folder sharing changes needed — sign in with your own account. One-time setup (~5 min): ① Configure the <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">OAuth consent screen</a> (External, add your own email as a test user); ② Create a <a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">Web application client</a> and add this tool\'s URL to "Authorized JavaScript origins": use <code>http://localhost:8765</code> for local (add <code>http://127.0.0.1:8765</code> too if you open via 127.0.0.1), or <code>https://zoran1001.github.io</code> for GitHub Pages (<b>no /RTS-SELECTOR/ path</b> — origin is domain only), then paste the client ID above; ③ On the "Google hasn\'t verified this app" screen, click "Advanced → Go to…". Only you use it. Your current origin is shown above as "Current OAuth origin".',
+    'gd_oauth_help_html': 'No folder sharing changes needed — sign in with your own account. One-time setup (~5 min): ① Configure the <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">OAuth consent screen</a> (External, add your own email as a test user); ② Create a <a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">Web application client</a> and add this tool\'s URL to "Authorized JavaScript origins": use <code>http://localhost:8765</code> for local (add <code>http://127.0.0.1:8765</code> too if you open via 127.0.0.1), or <code>https://zoran1001.github.io</code> for GitHub Pages (<b>no /RTS-SELECTOR/ path</b> — origin is domain only), then paste the client ID above; ③ On the "Google hasn\'t verified this app" screen, click "Advanced → Go to…". Only you use it. <b>⚠ Google Workspace / company accounts (e.g. @yourcompany.com) are blocked by Google\'s OAuth policy (invalid_request) — use a personal Gmail account, or access via an https origin.</b> Your current origin is shown above as "Current OAuth origin".',
     'gd_sheet_step1': '① Limit to a folder (optional — empty means search everything your account can see)',
     'gd_sheet_folder_ph': 'Optional: paste a folder link to search only inside it',
     'gd_sheet_step2': '② Upload a spreadsheet (Excel / CSV)',
@@ -2153,16 +2153,26 @@ function applyTranslations() {
   const oEl = document.getElementById('gd-origin');
   if (oEl) {
     const origin = window.location.origin;
-    const secure = /^https?:\/\//.test(origin);
+    const isHttp = /^http:\/\//.test(origin);
+    const isSecure = /^https:\/\//.test(origin);
     const label = currentLang === 'zh' ? '当前 OAuth 来源' : 'Current OAuth origin';
     let msg = '';
-    if (!secure) {
+    let warn = false;
+    if (!isHttp && !isSecure) {
+      warn = true;
       msg = currentLang === 'zh'
         ? '（⚠ 非 http(s) 环境，OAuth 不可用。请通过 http://localhost:8765 或 https://zoran1001.github.io 访问）'
         : ' (⚠ not http(s); OAuth unavailable. Use http://localhost:8765 or https://zoran1001.github.io)';
+    } else if (isHttp) {
+      // http 明文来源：个人 Gmail 账号通常可用；但 Google Workspace（企业邮箱）账号
+      // 会被 Workspace 策略直接拦截，报 "doesn't comply with Google's OAuth 2.0 policy"。
+      warn = true;
+      msg = currentLang === 'zh'
+        ? '（⚠ 明文 http，仅个人 Gmail 可用；企业/Workspace 账号（如 @公司域名）会被 Google 策略拦截，请用 https 或换个人账号）'
+        : ' (⚠ plain http — fine for personal Gmail, but Google Workspace accounts are blocked by policy; use https or a personal account)';
     }
     oEl.innerHTML = '<span class="gd-origin-label">' + label + '：</span><code>' + gdEscape(origin) + '</code>' + msg;
-    oEl.classList.toggle('warn', !secure);
+    oEl.classList.toggle('warn', warn);
   }
   if (typeof gdRefreshAuthUI === 'function') gdRefreshAuthUI();
   if (typeof gdRefreshSheetAfterLang === 'function') gdRefreshSheetAfterLang();
