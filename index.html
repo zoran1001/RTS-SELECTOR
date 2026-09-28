@@ -1090,7 +1090,7 @@ input[type="checkbox"] {
           <div class="gd-sheet-meta" id="gd-sheet-meta"></div>
 
           <div id="gd-col-config" style="display:none">
-            <div class="gd-step" id="gd-step3-text">③ 识别产品（确认搜索关键词，自动去重）</div>
+            <div class="gd-step" id="gd-step3-text">③ 确认列映射（选好后点下方「识别产品」）</div>
             <div class="gd-col-map">
               <div>
                 <label class="gd-label" for="gd-col-sku" style="margin:0" id="gd-col-sku-label">哪一列是 SKU / 货号？（最优先搜索）</label>
@@ -1107,7 +1107,15 @@ input[type="checkbox"] {
             </div>
             <div class="gd-preview" id="gd-sheet-preview"></div>
 
-            <!-- Step 2 产品识别列表：每行 SKU / 名称 / 型号 + 可改搜索关键词，自动去重 -->
+            <!-- 手动触发：确认列映射后点这里才识别产品（不自动扫描） -->
+            <div class="gd-row">
+              <span></span>
+              <button class="btn btn-primary" id="gd-recognize-btn" onclick="gdRecognizeProducts()">
+                <span id="gd-recognize-btn-text">③ 识别产品</span>
+              </button>
+            </div>
+
+            <!-- Step 3 产品识别列表：每行 SKU / 名称 / 型号 + 可改搜索关键词，自动去重 -->
             <div id="gd-prod-list" style="display:none">
               <div class="gd-prod-head">
                 <span id="gd-prod-list-title">识别到的产品</span>
@@ -1196,7 +1204,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.10</span>
+  <span class="header-version">v2.11</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -1734,7 +1742,9 @@ const translations = {
     'gd_sheet_step1': '① 限定文件夹（可选，不填＝搜你账号能看到的所有云盘）',
     'gd_sheet_folder_ph': '可选：粘贴文件夹链接，搜索范围只限这里',
     'gd_sheet_step2': '② 上传表格（Excel / CSV）',
-    'gd_sheet_step3': '③ 识别产品（确认搜索关键词，自动去重）',
+    'gd_sheet_step3': '③ 确认列映射（选好后点下方「识别产品」）',
+    'gd_recognize': '③ 识别产品',
+    'gd_recognized_done': '已识别',
     'gd_sheet_pick': '点击选择 .xlsx / .xls / .csv 表格文件',
     'gd_sheet_xlsx_loading': '正在加载表格解析组件...',
     'gd_sheet_loaded': '已读取 {n} 行数据（第一行按表头处理），请确认下面几列选对了',
@@ -1967,7 +1977,9 @@ const translations = {
     'gd_sheet_step1': '① Limit to a folder (optional — empty means search everything your account can see)',
     'gd_sheet_folder_ph': 'Optional: paste a folder link to search only inside it',
     'gd_sheet_step2': '② Upload a spreadsheet (Excel / CSV)',
-    'gd_sheet_step3': '③ Recognize products (confirm keywords, auto-dedupe)',
+    'gd_sheet_step3': '③ Confirm columns, then click "Recognize products" below',
+    'gd_recognize': '③ Recognize products',
+    'gd_recognized_done': 'recognized',
     'gd_sheet_pick': 'Choose a .xlsx / .xls / .csv file',
     'gd_sheet_xlsx_loading': 'Loading spreadsheet parser...',
     'gd_sheet_loaded': '{n} data rows read (first row treated as headers). Please confirm the columns below',
@@ -2157,6 +2169,7 @@ function applyTranslations() {
   setText('#gd-step1-text', t('gd_sheet_step1'));
   setText('#gd-step2-text', t('gd_sheet_step2'));
   setText('#gd-step3-text', t('gd_sheet_step3'));
+  setText('#gd-recognize-btn-text', t('gd_recognize'));
   setText('#gd-col-sku-label', t('gd_col_sku_label'));
   setText('#gd-col-model-label', t('gd_col_model_label'));
   setText('#gd-col-name-label', t('gd_col_name_label'));
@@ -2998,6 +3011,7 @@ function gdOpen(target) {
   gdSheetFileName = '';
   document.getElementById('gd-sheet-refresh').style.display = 'none';
   gdProdList = [];
+  gdRecognized = false;
   gdRows = [];
   gdSheetDone = false;
   gdSheetRunning = false;
@@ -3238,7 +3252,8 @@ let gdSheetColName = -1;
 let gdSheetColModel = -1;
 let gdRows = [];                  // [{sku,name,model,status:'searching'|'sku'|'model'|'name'|'kw'|'none',
                                   //   hitKeyword,cands:[{id,name,mimeType,size,picked,blob,objUrl}],resInput,researchOpen,researching}]
-let gdProdList = [];               // Step 2 产品识别列表 [{sku,model,name,keyword,dup,src}]
+let gdProdList = [];               // Step 3 产品识别列表 [{sku,model,name,keyword,dup,src}]
+let gdRecognized = false;          // 用户是否已手动点过「识别产品」（不自动扫描）
 let gdSheetRunning = false;
 let gdSheetImporting = false;
 let gdSheetDone = false;
@@ -3548,9 +3563,10 @@ async function gdSheetPicked(file) {
   }
 }
 
-// 用已读入的 gdSheetAOA 重新识别列 → 重建下拉 → 预览 → 重建产品列表。
-// 表格文件解析成功后、以及点"刷新表格"时都走这里，保证两者结果完全一致。
+// 用已读入的 gdSheetAOA 重新识别列 → 重建下拉 → 预览。
+// 表格文件解析成功后、以及点"刷新表格"时都走这里。
 // keepCols=true 时保留用户当前已选好的列（刷新场景），否则重新自动识别（首次解析）。
+// 注意：这里**只认列、只渲染预览**，不构建产品列表——产品识别必须用户手动点「识别产品」触发。
 function gdSheetApplyAOA(keepCols) {
   const prev = keepCols ? [gdSheetColSku, gdSheetColModel, gdSheetColName] : null;
   gdGuessColumns();
@@ -3563,12 +3579,14 @@ function gdSheetApplyAOA(keepCols) {
   }
   gdBuildColumnSelects();
   gdRenderPreview();
+
+  // 产品列表作废：隐藏列表 + 禁用搜索，等用户点「识别产品」
   gdProdList = [];
-  gdBuildProdList();
-  gdRenderProdList();
+  gdRecognized = false;
+  document.getElementById('gd-prod-list').style.display = 'none';
+  document.getElementById('gd-sheet-run').disabled = true;
 
   document.getElementById('gd-col-config').style.display = '';
-  document.getElementById('gd-sheet-run').disabled = false;
   // 重新解析后，旧的搜索结果、选择状态、结果页统计全部作废，回到设置页等用户确认列
   gdSheetDone = false;
   gdRows = [];
@@ -3582,8 +3600,22 @@ function gdSheetApplyAOA(keepCols) {
   gdSyncFooter();
 }
 
+// 「③ 识别产品」：用户手动点击后才把表格数据行整理成产品列表（去重 + 可改关键词）。
+// 这就是"不自动扫描产品"的落点。
+function gdRecognizeProducts() {
+  if (!gdSheetAOA.length) { gdSheetShowError('gd_sheet_refresh_none'); return; }
+  if (gdSheetRunning || gdSheetImporting) return;
+  gdSheetClearError();
+  gdBuildProdList();
+  gdRenderProdList();
+  gdRecognized = true;
+  document.getElementById('gd-prod-list').style.display = '';
+  document.getElementById('gd-sheet-run').disabled = gdProdList.filter(p => !p.dup).length === 0;
+  gdDebug('info', '已识别产品：' + gdProdList.filter(p => !p.dup).length + ' 项（共 ' + gdProdList.length + ' 行）');
+}
+
 // "刷新表格"：不重新选文件，用当前已读入的表格数据重新解析一遍
-// （保留用户已手动选好的列映射，只重建预览与产品列表）
+// （保留用户已手动选好的列映射，只重建预览；产品列表同样需要重新点「识别产品」）
 function gdSheetRefresh() {
   if (!gdSheetAOA.length) { gdSheetShowError('gd_sheet_refresh_none'); return; }
   if (gdSheetRunning || gdSheetImporting) return;   // 搜索/加载中不允许重解析
@@ -3663,14 +3695,17 @@ function gdRenderPreview() {
     '</tbody></table>';
 }
 
-// 列映射变化时：刷新预览 + 重建产品识别列表（搜索关键词默认 = 优先级解析结果 SKU→型号→名称）
+// 列映射变化时：刷新预览，并让已识别的产品列表作废——需重新点「识别产品」。
+// （因为在手动模式下，产品列表是用户点按钮那一刻的快照，改列后就不准了）
 function gdColChanged() {
   gdSheetColSku = parseInt(document.getElementById('gd-col-sku').value, 10);
   gdSheetColModel = parseInt(document.getElementById('gd-col-model').value, 10);
   gdSheetColName = parseInt(document.getElementById('gd-col-name').value, 10);
   gdRenderPreview();
-  gdBuildProdList();
-  gdRenderProdList();
+  gdProdList = [];
+  gdRecognized = false;
+  document.getElementById('gd-prod-list').style.display = 'none';
+  document.getElementById('gd-sheet-run').disabled = true;
 }
 
 // Step 2：把表格数据行整理成产品列表，每个产品带一个可改"搜索关键词"，并按关键词去重
