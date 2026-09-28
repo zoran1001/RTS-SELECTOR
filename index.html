@@ -762,55 +762,6 @@ input[type="checkbox"] {
   border-radius: var(--radius-sm); line-height: 1.6;
 }
 .gd-err .gd-err-detail { display:block; margin-top:4px; font-family: var(--font-mono); font-size:10px; color: var(--white-3); word-break: break-all; }
-.gd-warn {
-  display: none; font-size: 11px; color: var(--yellow);
-  margin-top: 12px; padding: 8px 12px;
-  background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.28);
-  border-radius: var(--radius-sm); line-height: 1.6;
-}
-.gd-filter-input { margin: 8px 0 0; font-size: 12px; }
-.gd-more {
-  padding: 10px; text-align: center; font-size: 11px;
-  color: var(--white-3); border-top: 1px solid var(--border);
-}
-.gd-summary {
-  display: none; font-size: 12px; color: #4ade80;
-  margin-top: 12px; padding: 9px 12px;
-  background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
-  border-radius: var(--radius-sm); line-height: 1.6;
-}
-.gd-summary.fail { color: var(--red-bright); background: var(--red-dim); border-color: var(--border-red); }
-.gd-summary .gd-failed-list { display:block; margin-top:6px; font-size:11px; color: var(--white-2); max-height:90px; overflow-y:auto; }
-.gd-list-head {
-  display: flex; align-items: center; gap: 10px;
-  margin: 16px 0 8px; padding-top: 14px; border-top: 1px solid var(--border);
-}
-.gd-count { margin-left: auto; font-size: 11px; color: var(--white-3); font-family: var(--font-mono); }
-.gd-list {
-  max-height: 264px; overflow-y: auto;
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
-  background: var(--black-3);
-}
-.gd-empty { padding: 22px 12px; text-align: center; font-size: 12px; color: var(--white-3); }
-.gd-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 7px 10px; border-bottom: 1px solid var(--border);
-  cursor: pointer;
-}
-.gd-item:last-child { border-bottom: none; }
-.gd-item:hover { background: var(--black-4); }
-.gd-item img {
-  width: 38px; height: 38px; object-fit: contain;
-  background: var(--black-5); border-radius: 4px; flex-shrink: 0;
-}
-.gd-item-info { min-width: 0; flex: 1; }
-.gd-item-name { display:block; font-size: 12px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gd-item-path { display:block; font-size: 10px; color: var(--white-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gd-item-size { font-size: 10px; color: var(--white-3); font-family: var(--font-mono); flex-shrink: 0; width: 56px; text-align: right; }
-.gd-item.status-done { opacity: .5; }
-.gd-item.status-done .gd-item-name::after { content: ' ✓'; color: #4ade80; }
-.gd-item.status-failed .gd-item-name { color: var(--red-bright); }
-.gd-item.status-failed .gd-item-name::after { content: ' ✕'; color: var(--red-bright); }
 .gd-progress { margin-top: 14px; }
 .gd-spin {
   display: inline-block; width: 11px; height: 11px;
@@ -827,21 +778,50 @@ input[type="checkbox"] {
   border-top: 1px solid var(--border);
 }
 
-/* 模式切换 + 表格查找 */
-.gd-switch {
-  display: flex; gap: 6px;
-  background: var(--black-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 3px; margin-bottom: 14px;
+/* 步骤指示条（统一线性流程：上传表格 → 识别产品 → 搜图 → 选图 → 导入） */
+.gd-steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.gd-step-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--black-3);
+  font-size: 11px; color: var(--white-3); font-family: var(--font-ui); white-space: nowrap;
 }
-.gd-switch button {
-  flex: 1; padding: 7px 8px;
-  background: transparent; border: none; border-radius: 4px;
-  color: var(--white-3); font-size: 12px; font-weight: 600;
-  font-family: var(--font-ui); cursor: pointer; transition: all .15s;
+.gd-step-chip .num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--white-4); color: #000; font-size: 10px; font-weight: 700;
 }
-.gd-switch button.active { background: var(--red); color: #fff; }
+.gd-step-chip.active { border-color: var(--red); color: #fff; }
+.gd-step-chip.active .num { background: var(--red); color: #fff; }
+
+/* Step 2 产品识别列表 */
+.gd-prod-head { display: flex; align-items: baseline; gap: 10px; margin: 14px 0 8px; }
+#gd-prod-list-title { font-size: 12px; font-weight: 700; color: var(--white); }
+.gd-prod-hint { font-size: 11px; color: var(--white-3); }
+.gd-prod-rows { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.gd-prod-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 11px;
+}
+.gd-prod-item:last-child { border-bottom: none; }
+.gd-prod-item.is-dup { opacity: .45; }
+.gd-prod-idx { color: var(--white-4); font-family: var(--font-mono); font-size: 10px; min-width: 18px; }
+.gd-prod-info { display: flex; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 0; }
+.gd-prod-info span { color: var(--white-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.gd-prod-sku { color: var(--red-bright) !important; font-weight: 600; }
+.gd-prod-model { color: #f5b942 !important; }
+.gd-prod-name { color: #6aa6ff !important; }
+.gd-prod-kw { flex: 0 0 200px; }
+.gd-prod-kw input {
+  width: 100%; font-size: 11px; color: var(--white);
+  background: var(--black-3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 5px 8px; font-family: var(--font-ui);
+}
+.gd-prod-kw input:focus { border-color: var(--red); outline: none; }
+.gd-prod-dup {
+  font-size: 10px; padding: 1px 7px; border-radius: 10px;
+  background: var(--white-4); color: #000; font-weight: 600; flex: 0 0 auto; white-space: nowrap;
+}
 .gd-auth-box {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1032,60 +1012,17 @@ input[type="checkbox"] {
       <button class="gd-close" onclick="gdClose()" title="Close">✕</button>
     </div>
     <div class="gd-body">
-      <div class="gd-switch">
-        <button id="gd-tab-browse" class="active" onclick="gdSwitchMode('browse')"><span id="gd-tab-browse-text">链接浏览</span></button>
-        <button id="gd-tab-sheet" onclick="gdSwitchMode('sheet')"><span id="gd-tab-sheet-text">表格查找（SKU）</span></button>
+      <!-- 单页线性 5 步流程 -->
+      <div class="gd-steps" id="gd-steps">
+        <div class="gd-step-chip active" data-step="1"><span class="num">1</span><span class="lbl" id="gd-step1-cap">上传表格</span></div>
+        <div class="gd-step-chip" data-step="2"><span class="num">2</span><span class="lbl" id="gd-step2-cap">产品识别</span></div>
+        <div class="gd-step-chip" data-step="3"><span class="num">3</span><span class="lbl" id="gd-step3-cap">搜图</span></div>
+        <div class="gd-step-chip" data-step="4"><span class="num">4</span><span class="lbl" id="gd-step4-cap">选图</span></div>
+        <div class="gd-step-chip" data-step="5"><span class="num">5</span><span class="lbl" id="gd-step5-cap">导入</span></div>
       </div>
 
-      <!-- ═══ 模式一：链接浏览 ═══ -->
-      <div id="gd-mode-browse">
-      <label class="gd-label" for="gd-folder-input" id="gd-folder-label">谷歌云盘文件夹链接</label>
-      <input type="text" id="gd-folder-input" list="gd-recent-list" autocomplete="off" spellcheck="false"
-        placeholder="https://drive.google.com/drive/folders/...">
-      <datalist id="gd-recent-list"></datalist>
-
-      <label class="gd-label" for="gd-key-input" id="gd-key-label">API Key（只保存在这台电脑的浏览器里）</label>
-      <input type="password" id="gd-key-input" autocomplete="off" spellcheck="false" placeholder="AIza...">
-
-      <div class="gd-help" id="gd-help"></div>
-
-      <label class="gd-label" for="gd-keyword-input" id="gd-keyword-label">按产品名 / 型号关键词搜索（推荐，图很多时必填）</label>
-      <input type="text" id="gd-keyword-input" autocomplete="off" spellcheck="false" placeholder="">
-
-      <div class="gd-row">
-        <label class="gd-check">
-          <input type="checkbox" id="gd-recursive" checked>
-          <span id="gd-recursive-text">包含子文件夹里的图片</span>
-        </label>
-        <button class="btn btn-primary" id="gd-read-btn" onclick="gdReadFolder()">
-          <span class="gd-btn-label" id="gd-read-text">读取文件列表</span>
-        </button>
-      </div>
-
-      <div class="gd-err" id="gd-err"></div>
-      <div class="gd-warn" id="gd-warn"></div>
-
-      <div class="gd-list-head" id="gd-list-head" style="display:none">
-        <label class="gd-check">
-          <input type="checkbox" id="gd-select-all" checked onchange="gdToggleAll(this.checked)">
-          <span id="gd-select-all-text">全选当前显示</span>
-        </label>
-        <span class="gd-count" id="gd-count"></span>
-      </div>
-      <input type="text" id="gd-filter-input" class="gd-filter-input" style="display:none"
-        autocomplete="off" spellcheck="false" oninput="gdOnFilterInput()" placeholder="">
-      <div class="gd-list" id="gd-list"></div>
-
-      <div class="gd-progress" id="gd-progress" style="display:none">
-        <div class="progress-bar-outer"><div class="progress-bar-inner" id="gd-progress-bar" style="width:0%"></div></div>
-        <div class="progress-text" id="gd-progress-text"></div>
-      </div>
-
-      <div class="gd-summary" id="gd-summary"></div>
-      </div><!-- /gd-mode-browse -->
-
-      <!-- ═══ 模式二：表格查找（SKU） ═══ -->
-      <div id="gd-mode-sheet" style="display:none">
+      <!-- ═══ 统一流程（OAuth + 表格查找 + 产品识别 + 搜图 + 选图 + 导入） ═══ -->
+      <div id="gd-mode-sheet">
 
         <!-- ── 设置页：登录 → 选文件夹 → 传表格 → 确认列 → 开始搜索 ── -->
         <div id="gd-sheet-setup">
@@ -1107,6 +1044,7 @@ input[type="checkbox"] {
           <div class="gd-step" id="gd-step1-text">① 限定文件夹（可选，不填=搜你账号能看到的所有云盘）</div>
           <input type="text" id="gd-sheet-folder" list="gd-recent-list" autocomplete="off" spellcheck="false"
             placeholder="https://drive.google.com/drive/folders/...">
+          <datalist id="gd-recent-list"></datalist>
 
           <div class="gd-step" id="gd-step2-text">② 上传表格（Excel / CSV）</div>
           <input type="file" id="gd-sheet-input" accept=".xlsx,.xls,.csv" style="display:none"
@@ -1117,27 +1055,37 @@ input[type="checkbox"] {
           <div class="gd-sheet-meta" id="gd-sheet-meta"></div>
 
           <div id="gd-col-config" style="display:none">
+            <div class="gd-step" id="gd-step3-text">③ 识别产品（确认搜索关键词，自动去重）</div>
             <div class="gd-col-map">
               <div>
                 <label class="gd-label" for="gd-col-sku" style="margin:0" id="gd-col-sku-label">哪一列是 SKU / 货号？（最优先搜索）</label>
-                <select id="gd-col-sku" onchange="gdRenderPreview()"></select>
+                <select id="gd-col-sku" onchange="gdColChanged()"></select>
               </div>
               <div>
                 <label class="gd-label" for="gd-col-model" style="margin:0" id="gd-col-model-label">哪一列是型号？（没有可不选）</label>
-                <select id="gd-col-model" onchange="gdRenderPreview()"></select>
+                <select id="gd-col-model" onchange="gdColChanged()"></select>
               </div>
               <div>
                 <label class="gd-label" for="gd-col-name" style="margin:0" id="gd-col-name-label">哪一列是产品名称？（兜底搜索）</label>
-                <select id="gd-col-name" onchange="gdRenderPreview()"></select>
+                <select id="gd-col-name" onchange="gdColChanged()"></select>
               </div>
             </div>
             <div class="gd-preview" id="gd-sheet-preview"></div>
+
+            <!-- Step 2 产品识别列表：每行 SKU / 名称 / 型号 + 可改搜索关键词，自动去重 -->
+            <div id="gd-prod-list" style="display:none">
+              <div class="gd-prod-head">
+                <span id="gd-prod-list-title">识别到的产品</span>
+                <span class="gd-prod-hint" id="gd-prod-list-hint"></span>
+              </div>
+              <div class="gd-prod-rows" id="gd-prod-rows"></div>
+            </div>
           </div>
 
           <div class="gd-row">
             <span></span>
             <button class="btn btn-primary" id="gd-sheet-run" onclick="gdSheetSearch()" disabled>
-              <span id="gd-sheet-run-text">③ 开始搜索</span>
+              <span id="gd-sheet-run-text">④ 开始搜索图片</span>
             </button>
           </div>
         </div><!-- /gd-sheet-setup -->
@@ -1169,7 +1117,7 @@ input[type="checkbox"] {
     </div>
     <div class="gd-foot">
       <button class="btn" id="gd-cancel-btn" onclick="gdCancel()"><span id="gd-cancel-text">取消</span></button>
-      <button class="btn btn-primary" id="gd-import-btn" onclick="gdImportSelected()" disabled>
+      <button class="btn btn-primary" id="gd-import-btn" onclick="gdSheetImport()" disabled>
         <span id="gd-import-text">导入选中</span>
       </button>
     </div>
@@ -1203,7 +1151,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.4</span>
+  <span class="header-version">v2.5</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -1723,9 +1671,14 @@ const translations = {
     'gd_failed_title': '失败的文件：',
     'gd_log_imported': '谷歌云盘导入：成功',
     'gd_log_failed': '失败',
-    // 表格查找模式
-    'gd_tab_browse': '链接浏览',
-    'gd_tab_sheet': '表格查找（SKU）',
+    // 统一导入流程（线性 5 步指示条）
+    'gd_step1_cap': '上传表格',
+    'gd_step2_cap': '产品识别',
+    'gd_step3_cap': '搜图',
+    'gd_step4_cap': '选图',
+    'gd_step5_cap': '导入',
+    'gd_dup': '重复',
+    'gd_kw_placeholder': '搜索关键词（可修改）',
     'gd_clientid_label': 'OAuth 客户端 ID（以 .apps.googleusercontent.com 结尾，只存在本机）',
     'gd_clientid_ph': '粘贴客户端 ID，xxxxx.apps.googleusercontent.com',
     'gd_login': '登录谷歌账号',
@@ -1736,6 +1689,7 @@ const translations = {
     'gd_sheet_step1': '① 限定文件夹（可选，不填＝搜你账号能看到的所有云盘）',
     'gd_sheet_folder_ph': '可选：粘贴文件夹链接，搜索范围只限这里',
     'gd_sheet_step2': '② 上传表格（Excel / CSV）',
+    'gd_sheet_step3': '③ 识别产品（确认搜索关键词，自动去重）',
     'gd_sheet_pick': '点击选择 .xlsx / .xls / .csv 表格文件',
     'gd_sheet_xlsx_loading': '正在加载表格解析组件...',
     'gd_sheet_loaded': '已读取 {n} 行数据（第一行按表头处理），请确认下面几列选对了',
@@ -1922,9 +1876,14 @@ const translations = {
     'gd_failed_title': 'Failed files:',
     'gd_log_imported': 'Google Drive import: succeeded',
     'gd_log_failed': 'failed',
-    // Sheet lookup mode
-    'gd_tab_browse': 'Browse by Link',
-    'gd_tab_sheet': 'Lookup by Sheet (SKU)',
+    // Unified import flow (linear 5-step indicator)
+    'gd_step1_cap': 'Upload',
+    'gd_step2_cap': 'Recognize',
+    'gd_step3_cap': 'Search',
+    'gd_step4_cap': 'Select',
+    'gd_step5_cap': 'Import',
+    'gd_dup': 'Dup',
+    'gd_kw_placeholder': 'Search keyword (editable)',
     'gd_clientid_label': 'OAuth Client ID (ends with .apps.googleusercontent.com, stored locally)',
     'gd_clientid_ph': 'Paste client ID, xxxxx.apps.googleusercontent.com',
     'gd_login': 'Sign in with Google',
@@ -1935,6 +1894,7 @@ const translations = {
     'gd_sheet_step1': '① Limit to a folder (optional — empty means search everything your account can see)',
     'gd_sheet_folder_ph': 'Optional: paste a folder link to search only inside it',
     'gd_sheet_step2': '② Upload a spreadsheet (Excel / CSV)',
+    'gd_sheet_step3': '③ Recognize products (confirm keywords, auto-dedupe)',
     'gd_sheet_pick': 'Choose a .xlsx / .xls / .csv file',
     'gd_sheet_xlsx_loading': 'Loading spreadsheet parser...',
     'gd_sheet_loaded': '{n} data rows read (first row treated as headers). Please confirm the columns below',
@@ -2082,29 +2042,20 @@ function applyTranslations() {
 
   // Google Drive 弹窗静态文案
   setText('#gd-title', t('gd_title'));
-  setText('#gd-folder-label', t('gd_folder_label'));
-  setText('#gd-key-label', t('gd_key_label'));
-  setText('#gd-keyword-label', t('gd_keyword_label'));
-  setText('#gd-recursive-text', t('gd_recursive'));
-  setText('#gd-select-all-text', t('gd_select_all'));
-  const gdFolderInput = document.getElementById('gd-folder-input');
-  const gdKeyInput = document.getElementById('gd-key-input');
-  const gdKeywordInput = document.getElementById('gd-keyword-input');
-  const gdFilterInput = document.getElementById('gd-filter-input');
-  if (gdFolderInput) gdFolderInput.placeholder = t('gd_folder_ph');
-  if (gdKeyInput) gdKeyInput.placeholder = t('gd_key_ph');
-  if (gdKeywordInput) gdKeywordInput.placeholder = t('gd_keyword_ph');
-  if (gdFilterInput) gdFilterInput.placeholder = t('gd_filter_ph');
   setHTML('#gd-help', t('gd_help_html'));
 
-  // 表格查找模式静态文案
-  setText('#gd-tab-browse-text', t('gd_tab_browse'));
-  setText('#gd-tab-sheet-text', t('gd_tab_sheet'));
+  // 统一流程：步骤指示条 + 表格查找模式静态文案
+  setText('#gd-step1-cap', t('gd_step1_cap'));
+  setText('#gd-step2-cap', t('gd_step2_cap'));
+  setText('#gd-step3-cap', t('gd_step3_cap'));
+  setText('#gd-step4-cap', t('gd_step4_cap'));
+  setText('#gd-step5-cap', t('gd_step5_cap'));
   setText('#gd-clientid-label', t('gd_clientid_label'));
   setText('#gd-login-text', t('gd_login'));
   setText('#gd-logout-btn', t('gd_logout'));
   setText('#gd-step1-text', t('gd_sheet_step1'));
   setText('#gd-step2-text', t('gd_sheet_step2'));
+  setText('#gd-step3-text', t('gd_sheet_step3'));
   setText('#gd-col-sku-label', t('gd_col_sku_label'));
   setText('#gd-col-model-label', t('gd_col_model_label'));
   setText('#gd-col-name-label', t('gd_col_name_label'));
@@ -2879,13 +2830,8 @@ const GD_RENDER_PAGE = 100;   // 列表每批渲染条数（防止上万条把�
 const GD_WARN_AT = 1500;      // 结果超过这个数时提示改用关键词
 
 let gdTarget = null;          // 'pp'（预处理） | 'cpProd'（合成-产品图）
-let gdItems = [];             // 云盘文件列表
-let gdPhase = 'idle';         // idle | reading | ready | importing | done
 let gdAbort = false;
-let gdMode = 'browse';        // browse（链接浏览）| sheet（表格查找）
 let gdFolderMap = new Map();  // folderId -> 相对路径
-let gdFilter = '';            // 结果内即时筛选文字
-let gdViewLimit = GD_RENDER_PAGE;
 let gdListObserver = null;    // 滚动加载更多观察器
 
 function gdEscape(s) {
@@ -2913,66 +2859,48 @@ function gdParseFolderId(input) {
 // ── 弹窗开关 ───────────────────────────────
 function gdOpen(target) {
   gdTarget = target;
-  gdItems = [];
-  gdPhase = 'idle';
   gdAbort = false;
 
   const overlay = document.getElementById('gdModal');
   overlay.classList.remove('hidden');
 
-  document.getElementById('gd-folder-input').value = '';
-  document.getElementById('gd-keyword-input').value = '';
-  document.getElementById('gd-filter-input').value = '';
-  document.getElementById('gd-key-input').value = localStorage.getItem('gdrive_api_key') || '';
-  document.getElementById('gd-recursive').checked = true;
-  document.getElementById('gd-err').style.display = 'none';
-  document.getElementById('gd-warn').style.display = 'none';
-  document.getElementById('gd-summary').style.display = 'none';
-  document.getElementById('gd-list-head').style.display = 'none';
-  document.getElementById('gd-filter-input').style.display = 'none';
-  document.getElementById('gd-progress').style.display = 'none';
-  document.getElementById('gd-list').innerHTML = '';
-  document.getElementById('gd-select-all').checked = true;
+  document.getElementById('gd-sheet-err').style.display = 'none';
 
-  // 最近用过的文件夹链接
+  // 最近用过的文件夹链接（给"限定文件夹"输入框做自动补全）
   const recent = JSON.parse(localStorage.getItem('gdrive_recent_folders') || '[]');
-  document.getElementById('gd-recent-list').innerHTML =
-    recent.map(u => `<option value="${gdEscape(u)}">`).join('');
+  const recentEl = document.getElementById('gd-recent-list');
+  if (recentEl) recentEl.innerHTML = recent.map(u => `<option value="${gdEscape(u)}">`).join('');
 
-  const readBtn = document.getElementById('gd-read-btn');
-  readBtn.disabled = false;
-  readBtn.style.display = '';
   const importBtn = document.getElementById('gd-import-btn');
   importBtn.disabled = true;
-  importBtn.style.display = '';
-  importBtn.onclick = gdImportSelected;
+  importBtn.style.display = 'none';
   document.getElementById('gd-cancel-btn').style.display = '';
 
   gdFolderMap = new Map();
-  gdFilter = '';
-  gdViewLimit = GD_RENDER_PAGE;
 
-  // 表格模式：带出保存的客户端 ID、登录状态；每次打开都从"设置页"开始走 Upload→Search 流程
+  // 每次打开都从"上传表格 → 识别产品 → 搜图 → 选图 → 导入"流程头开始
   document.getElementById('gd-client-id').value = localStorage.getItem('gdrive_client_id') || '';
   document.getElementById('gd-sheet-folder').value = '';
+  gdSheetAOA = [];
+  gdProdList = [];
+  gdRows = [];
+  gdSheetDone = false;
+  gdSheetRunning = false;
+  gdSheetImporting = false;
+  document.getElementById('gd-col-config').style.display = 'none';
+  document.getElementById('gd-prod-list').style.display = 'none';
+  document.getElementById('gd-sheet-run').disabled = true;
+  document.getElementById('gd-sheet-meta').textContent = '';
+  document.getElementById('gd-sheet-results').innerHTML = '';
+  document.getElementById('gd-miss-toggle').style.display = 'none';
+  document.getElementById('gd-sheet-stat').textContent = '';
+  document.getElementById('gd-review-counts').textContent = '';
   gdCloseLightbox();
   gdSheetView = 'setup';
-  gdSwitchMode(gdMode || 'browse', true);
-  if (gdMode === 'sheet') gdSheetShowView('setup');
+  gdSheetShowView('setup');
+  gdSetActiveSteps(1);
   gdRefreshAuthUI();
-
   gdRefreshModalTexts();
-
-  // 回车直接读取（只绑定一次）
-  if (!gdOpen._bound) {
-    gdOpen._bound = true;
-    ['gd-folder-input', 'gd-key-input', 'gd-keyword-input'].forEach(id => {
-      document.getElementById(id).addEventListener('keydown', e => {
-        if (e.key === 'Enter') gdReadFolder();
-      });
-    });
-  }
-  setTimeout(() => document.getElementById('gd-folder-input').focus(), 60);
 }
 
 // 记住最近 5 个成功读取过的文件夹链接
@@ -2983,7 +2911,7 @@ function gdSaveRecent(url) {
 }
 
 function gdClose() {
-  if (gdPhase === 'reading' || gdPhase === 'importing' || gdSheetRunning || gdSheetImporting) return;
+  if (gdSheetRunning || gdSheetImporting) return;
   gdCloseLightbox();
   document.getElementById('gdModal').classList.add('hidden');
 }
@@ -2993,60 +2921,22 @@ function gdOnOverlayClick(e) {
 }
 
 function gdCancel() {
-  // 表格模式：搜索/加载中=停止；结果页=返回设置页；设置页=关闭弹窗
-  if (gdMode === 'sheet') {
-    if (gdSheetRunning || gdSheetImporting) { gdAbort = true; return; }
-    if (gdSheetView === 'review' && !gdSheetDone) { gdSheetBackToSetup(); return; }
-    gdClose();
-    return;
-  }
-  if (gdPhase === 'reading' || gdPhase === 'importing') {
-    gdAbort = true;
-    gdRefreshModalTexts();
-  } else {
-    gdClose();
-  }
+  // 搜索/加载中=停止；结果页=返回设置页；设置页=关闭弹窗
+  if (gdSheetRunning || gdSheetImporting) { gdAbort = true; return; }
+  if (gdSheetView === 'review' && !gdSheetDone) { gdSheetBackToSetup(); return; }
+  gdClose();
 }
 
-// 弹窗内动态文案（语言切换时也走这里）
+// 弹窗内动态文案（语言切换时也走这里）—— 现仅表格模式，直接同步底部按钮
 function gdRefreshModalTexts() {
   if (!document.getElementById('gdModal')) return;
-  const readBtn = document.getElementById('gd-read-btn');
-  const importBtn = document.getElementById('gd-import-btn');
-  const cancelBtn = document.getElementById('gd-cancel-btn');
-
-  if (gdMode === 'sheet') { gdSyncFooter(); return; }
-
-  if (gdPhase === 'reading') {
-    readBtn.innerHTML = '<span class="gd-spin"></span>' + t('gd_reading') + '...';
-  } else {
-    readBtn.textContent = t('gd_read');
-  }
-  readBtn.disabled = gdPhase === 'reading' || gdPhase === 'importing';
-
-  importBtn.textContent = gdPhase === 'done' ? t('gd_done') : t('gd_import');
-  importBtn.disabled = gdPhase !== 'ready' && gdPhase !== 'done';
-  importBtn.onclick = gdImportSelected;
-
-  if (gdPhase === 'reading' || gdPhase === 'importing') {
-    cancelBtn.textContent = gdAbort ? t('gd_stopping') : t('gd_stop');
-  } else {
-    cancelBtn.textContent = t('gd_cancel');
-  }
-  cancelBtn.style.display = gdPhase === 'done' ? 'none' : '';
-
-  gdUpdateCount();
+  gdSyncFooter();
 }
 
-// 底部主按钮在两种模式 / 两个阶段下的不同行为
+// 底部主按钮在不同阶段下的行为（统一流程：设置页 / 搜索中 / 选图挑选 / 已导入）
 function gdSyncFooter() {
   const importBtn = document.getElementById('gd-import-btn');
   const cancelBtn = document.getElementById('gd-cancel-btn');
-  if (gdMode !== 'sheet') {
-    // 从表格模式切回链接浏览时，恢复链接浏览自己的按钮状态
-    importBtn.style.display = '';
-    return;
-  }
 
   // 设置页没有底部主按钮（开始搜索按钮在页面里），只留"取消"
   if (gdSheetView === 'setup' && !gdSheetRunning && !gdSheetImporting) {
@@ -3080,18 +2970,6 @@ function gdSyncFooter() {
     cancelBtn.textContent = t('gd_back_setup');
     cancelBtn.style.display = '';
   }
-}
-
-function gdSwitchMode(mode, silent) {
-  if (!silent && (gdSheetRunning || gdSheetImporting ||
-      gdPhase === 'reading' || gdPhase === 'importing')) return;
-  gdMode = mode;
-  document.getElementById('gd-mode-browse').style.display = mode === 'browse' ? '' : 'none';
-  document.getElementById('gd-mode-sheet').style.display = mode === 'sheet' ? '' : 'none';
-  document.getElementById('gd-tab-browse').classList.toggle('active', mode === 'browse');
-  document.getElementById('gd-tab-sheet').classList.toggle('active', mode === 'sheet');
-  gdSyncFooter();
-  gdRefreshModalTexts();
 }
 
 // ── API 请求 ───────────────────────────────
@@ -3176,253 +3054,47 @@ async function gdCollectFolderIds(rootId, key, recursive) {
 // 阶段二：批量查询图片
 // 50 个文件夹的条件 OR 成一次请求（比逐文件夹请求快几十倍）；
 // 有关键词时让谷歌服务端直接按文件名过滤，不用把海量清单全拉下来
-async function gdQueryImages(folderIds, key, terms) {
-  const items = [];
-  const mimeQ = Object.keys(GD_MIME_EXT).map(m => `mimeType = '${m}'`).join(' or ');
-  const termQ = terms.map(w => `name contains '${gdQ(w)}'`).join(' and ');
-  const batches = Math.max(1, Math.ceil(folderIds.length / GD_FOLDER_BATCH));
 
-  for (let b = 0; b < batches; b++) {
-    if (gdAbort) throw { aborted: true };
-    const slice = folderIds.slice(b * GD_FOLDER_BATCH, (b + 1) * GD_FOLDER_BATCH);
-    const parentQ = slice.map(id => `'${id}' in parents`).join(' or ');
-    let q = `(${parentQ}) and (${mimeQ}) and trashed = false`;
-    if (termQ) q += ` and (${termQ})`;
+// ═══════════════════════════════════════════════════════
+//  表格查找模式（OAuth 登录 + SKU 搜索 + 产品名兜底）
+// ═══════════════════════════════════════════════════════
+const GD_CLIENT_ID_KEY = 'gdrive_client_id';
+const GD_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+const GD_MAX_CANDS = 100;          // 单个 SKU 最多取多少张候选图
+const GD_SHEET_CONC = 3;          // 同时查找的行数
 
-    let pageToken = '';
-    let guard = 0;
-    do {
-      if (gdAbort) throw { aborted: true };
-      const data = await gdListQuery(q,
-        'nextPageToken,files(id,name,mimeType,size,parents)', key, pageToken);
-      (data.files || []).forEach(f => {
-        if (!GD_MIME_EXT[f.mimeType]) return;
-        const pid = (f.parents && f.parents[0]) || '';
-        items.push({
-          id: f.id, name: f.name, mimeType: f.mimeType,
-          size: parseInt(f.size, 10) || 0,
-          path: gdFolderMap.get(pid) || '',
-          checked: true, status: '', blob: null, error: ''
-        });
-      });
-      pageToken = data.nextPageToken || '';
-      document.getElementById('gd-progress-bar').style.width =
-        (12 + Math.round(((b + 1) / batches) * 83)) + '%';
-      document.getElementById('gd-progress-text').textContent =
-        (termQ ? t('gd_searching') : t('gd_listing'))
-          .replace('{x}', b + 1).replace('{y}', batches) + ' · ' + items.length;
-    } while (pageToken && ++guard < 2000);
-  }
-  items.sort((a, b) => (a.path + '/' + a.name).localeCompare(b.path + '/' + b.name));
-  return items;
-}
+let gdToken = null;
+let gdTokenClient = null;
+let gdTokenClientCid = '';      // 记住当前 token 客户端用的客户端 ID，换了 ID 要重新建
+let gdSheetAOA = [];              // 表格原始二维数组（含表头）
+let gdSheetColSku = -1;
+let gdSheetColName = -1;
+let gdSheetColModel = -1;
+let gdRows = [];                  // [{sku,name,model,status:'searching'|'sku'|'model'|'name'|'kw'|'none',
+                                  //   hitKeyword,cands:[{id,name,mimeType,size,picked,blob,objUrl}],resInput,researchOpen,researching}]
+let gdProdList = [];               // Step 2 产品识别列表 [{sku,model,name,keyword,dup,src}]
+let gdSheetRunning = false;
+let gdSheetImporting = false;
+let gdSheetDone = false;
+let gdSheetView = 'setup';        // setup（设置页）| review（搜索结果页）
+let gdSheetBaseQ = '';            // 本次全量搜索的公共查询条件（单组重搜时复用）
+let gdSheetLastOk = 0;              // 上次加载成功张数（用于语言切换后重画统计）
+let gdSheetLastFailedNames = [];    // 上次加载失败的文件名
+let gdThumbCache = new Map();
+let gdThumbObserver = null;
+let gdLb = { ri: -1, ci: -1, seq: 0 }; // 大图灯箱当前看的组/候选，seq 防止异步串台
+let gdLbKeyBound = false;
 
-// 把谷歌的报错翻译成人话（保留原始信息）
-function gdHumanError(e) {
-  if (e.aborted) return null;
-  if (e instanceof TypeError) return { key: 'gd_err_network', detail: e.message };
-  const msg = e.message || '';
-  const code = e.status || 0;
-  if (/rateLimit|user rate|quota|too many requests/i.test(msg) || code === 429) {
-    return { key: 'gd_err_quota', detail: msg };
-  }
-  if (code === 400 && /api key/i.test(msg)) return { key: 'gd_err_bad_key', detail: msg };
-  if (code === 400) return { key: 'gd_err_bad_key', detail: msg };
-  if (code === 403 && /has not been used|drive api|not enabled|disabled|access the data/i.test(msg)) {
-    return { key: 'gd_err_api_off', detail: msg };
-  }
-  if (code === 401) return { key: 'gd_token_expired', detail: msg };
-  if (code === 403) return { key: gdToken ? 'gd_token_expired' : 'gd_err_forbidden', detail: msg };
-  if (code === 404) return { key: 'gd_err_forbidden', detail: msg };
-  return { key: '', detail: msg || ('HTTP ' + code) };
-}
-
-function gdShowError(key, detail) {
-  const box = document.getElementById('gd-err');
-  const head = key ? t(key) : t('error');
-  box.innerHTML = gdEscape(head) + (detail ? `<span class="gd-err-detail">Google: ${gdEscape(detail)}</span>` : '');
-  box.style.display = 'block';
-}
-
-// ── 读取文件列表 ───────────────────────────────
-async function gdReadFolder() {
-  if (gdPhase === 'reading' || gdPhase === 'importing') return;
-
-  const folderInput = document.getElementById('gd-folder-input');
-  const keyInput = document.getElementById('gd-key-input');
-  const key = keyInput.value.trim();
-  const folderUrl = folderInput.value.trim();
-  const folderId = gdParseFolderId(folderUrl);
-  const terms = document.getElementById('gd-keyword-input').value
-    .trim().toLowerCase().split(/\s+/).filter(Boolean);
-
-  document.getElementById('gd-err').style.display = 'none';
-  document.getElementById('gd-warn').style.display = 'none';
-  document.getElementById('gd-summary').style.display = 'none';
-
-  if (!folderId) { gdShowError('gd_err_link'); return; }
-  if (!key) { gdShowError('gd_err_key'); return; }
-
-  localStorage.setItem('gdrive_api_key', key);
-
-  gdItems = [];
-  gdFilter = '';
-  gdViewLimit = GD_RENDER_PAGE;
-  gdAbort = false;
-  gdPhase = 'reading';
-  document.getElementById('gd-filter-input').value = '';
-  document.getElementById('gd-progress').style.display = 'block';
-  document.getElementById('gd-progress-bar').style.width = '6%';
-  document.getElementById('gd-progress-text').textContent = t('gd_scanning').replace('{n}', '0');
-  gdRefreshModalTexts();
-
-  try {
-    const recursive = document.getElementById('gd-recursive').checked;
-    const folderIds = await gdCollectFolderIds(folderId, key, recursive);
-    if (gdAbort) { gdPhase = 'idle'; gdRefreshModalTexts(); return; }
-
-    gdItems = await gdQueryImages(folderIds, key, terms);
-    if (gdAbort) { gdPhase = 'idle'; gdRefreshModalTexts(); return; }
-
-    document.getElementById('gd-progress-bar').style.width = '100%';
-    gdSaveRecent(folderUrl);
-
-    document.getElementById('gd-list-head').style.display = '';
-    document.getElementById('gd-filter-input').style.display =
-      gdItems.length > 20 ? 'block' : 'none';
-
-    if (gdItems.length === 0) {
-      document.getElementById('gd-list').innerHTML =
-        `<div class="gd-empty">${gdEscape(terms.length ? t('gd_empty_kw') : t('gd_empty'))}</div>`;
-    } else {
-      gdRenderList();
-      if (gdItems.length > GD_WARN_AT) {
-        const warn = document.getElementById('gd-warn');
-        warn.textContent = t('gd_warn_many').replace('{n}', gdItems.length.toLocaleString());
-        warn.style.display = 'block';
-      }
-    }
-    gdPhase = 'ready';
-    gdUpdateCount();
-  } catch (e) {
-    if (!e.aborted) {
-      console.error('Google Drive list failed:', e);
-      const info = gdHumanError(e);
-      if (info) gdShowError(info.key, info.detail);
-    }
-    gdPhase = 'idle';
-  } finally {
-    gdRefreshModalTexts();
-  }
-}
-
-// ── 列表渲染与选择 ───────────────────────────────
-// 当前筛选命中的原始下标（支持空格分多词，文件名和所在子文件夹都参与匹配）
-function gdVisiblePairs() {
-  const words = gdFilter.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return gdItems.map((_, i) => i);
-  const pairs = [];
-  gdItems.forEach((it, i) => {
-    const hay = (it.path + '/' + it.name).toLowerCase();
-    if (words.every(w => hay.includes(w))) pairs.push(i);
+function gdLoadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('load failed: ' + src));
+    document.head.appendChild(s);
   });
-  return pairs;
 }
 
-function gdItemRowHTML(i) {
-  const it = gdItems[i];
-  return `
-    <label class="gd-item ${it.status}" data-i="${i}">
-      <input type="checkbox" ${it.checked ? 'checked' : ''}
-        onchange="gdToggleItem(${i}, this.checked)">
-      <img loading="lazy" referrerpolicy="no-referrer"
-        src="https://drive.google.com/thumbnail?id=${encodeURIComponent(it.id)}&amp;sz=w72"
-        onerror="this.remove()" alt="">
-      <span class="gd-item-info">
-        <span class="gd-item-name">${gdEscape(it.name)}</span>
-        ${it.path ? `<span class="gd-item-path">${gdEscape(it.path)}</span>` : ''}
-      </span>
-      <span class="gd-item-size">${gdFmtSize(it.size)}</span>
-    </label>`;
-}
-
-// 只渲染前 gdViewLimit 条，滚到底部自动追加，避免上万条 DOM 卡死页面
-function gdRenderList() {
-  const listEl = document.getElementById('gd-list');
-  const pairs = gdVisiblePairs();
-
-  if (pairs.length === 0) {
-    listEl.innerHTML = `<div class="gd-empty">${gdEscape(gdFilter.trim() ? t('gd_no_filter_match') : t('gd_empty'))}</div>`;
-    return;
-  }
-
-  const shown = pairs.slice(0, gdViewLimit);
-  const hasMore = shown.length < pairs.length;
-  listEl.innerHTML = shown.map(gdItemRowHTML).join('') + (hasMore
-    ? `<div class="gd-more" id="gd-more-sentinel"><span class="gd-spin"></span>` +
-      gdEscape(t('gd_loading_more')) + ' · ' + (pairs.length - shown.length) + `</div>`
-    : '');
-
-  if (!gdListObserver) {
-    gdListObserver = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) {
-        gdViewLimit += GD_RENDER_PAGE;
-        gdRenderList();
-      }
-    }, { root: listEl, rootMargin: '160px' });
-  }
-  gdListObserver.disconnect();
-  const sentinel = document.getElementById('gd-more-sentinel');
-  if (sentinel) gdListObserver.observe(sentinel);
-}
-
-function gdOnFilterInput() {
-  gdFilter = document.getElementById('gd-filter-input').value;
-  gdViewLimit = GD_RENDER_PAGE;
-  gdRenderList();
-  gdUpdateCount();
-}
-
-function gdToggleItem(i, checked) {
-  gdItems[i].checked = checked;
-  gdSyncSelectAllBox();
-  gdUpdateCount();
-}
-
-// 全选/取消只作用于当前筛选后看得见的条目，其他勾选保留
-function gdToggleAll(checked) {
-  gdVisiblePairs().forEach(i => { gdItems[i].checked = checked; });
-  gdRenderList();
-  gdUpdateCount();
-}
-
-function gdSyncSelectAllBox() {
-  const pairs = gdVisiblePairs();
-  const visibleChecked = pairs.filter(i => gdItems[i].checked).length;
-  const sa = document.getElementById('gd-select-all');
-  if (!sa) return;
-  sa.checked = pairs.length > 0 && visibleChecked === pairs.length;
-  sa.indeterminate = visibleChecked > 0 && visibleChecked < pairs.length;
-}
-
-function gdUpdateCount() {
-  const el = document.getElementById('gd-count');
-  if (!el) return;
-  const picked = gdItems.filter(it => it.checked).length;
-  if (gdFilter.trim()) {
-    el.textContent = t('gd_filter_count')
-      .replace('{a}', gdVisiblePairs().length)
-      .replace('{x}', picked)
-      .replace('{y}', gdItems.length);
-  } else {
-    el.textContent = t('gd_selected_count').replace('{x}', picked).replace('{y}', gdItems.length);
-  }
-  const importBtn = document.getElementById('gd-import-btn');
-  if (gdPhase === 'ready') importBtn.disabled = picked === 0;
-  gdSyncSelectAllBox();
-}
-
-// ── 下载并导入 ───────────────────────────────
 async function gdDownloadBlob(it, key) {
   let url = `${GD_API}/files/${encodeURIComponent(it.id)}?alt=media&supportsAllDrives=true`;
   const headers = {};
@@ -3454,146 +3126,6 @@ function gdUniqueName(name, taken) {
   const finalName = `${base} (${n})${ext}`;
   taken.add(finalName.toLowerCase());
   return finalName;
-}
-
-async function gdImportSelected() {
-  if (gdPhase === 'done') { gdClose(); return; }
-  if (gdPhase !== 'ready') return;
-
-  const picked = gdItems
-    .map((it, idx) => ({ it, idx }))
-    .filter(o => o.it.checked && o.it.status !== 'done');
-
-  if (picked.length === 0) return;
-
-  const key = document.getElementById('gd-key-input').value.trim();
-  gdAbort = false;
-  gdPhase = 'importing';
-  document.getElementById('gd-err').style.display = 'none';
-  document.getElementById('gd-summary').style.display = 'none';
-  document.getElementById('gd-progress').style.display = 'block';
-  document.getElementById('gd-progress-bar').style.width = '0%';
-  gdRefreshModalTexts();
-
-  let cursor = 0, finished = 0, ok = 0, fail = 0;
-  const total = picked.length;
-
-  function setProgressText(name) {
-    const txt = t('gd_importing')
-      .replace('{x}', finished)
-      .replace('{y}', total)
-      .replace('{name}', name.length > 40 ? name.slice(0, 40) + '…' : name);
-    document.getElementById('gd-progress-text').textContent = txt;
-  }
-  setProgressText(picked[0].it.name);
-
-  async function worker() {
-    while (cursor < total) {
-      if (gdAbort) return;
-      const { it, idx } = picked[cursor++];
-      setProgressText(it.name);
-      try {
-        it.blob = await gdDownloadBlob(it, key);
-        it.status = 'done';
-        ok++;
-      } catch (e) {
-        it.status = 'failed';
-        it.error = e.message || ('HTTP ' + e.status);
-        console.error('Drive download failed:', it.name, e);
-        fail++;
-      }
-      finished++;
-      document.getElementById('gd-progress-bar').style.width = Math.round(finished / total * 100) + '%';
-      // 只更新这一行的状态，避免反复重建整张列表（缩略图不会重新加载）
-      const row = document.querySelector(`#gd-list .gd-item[data-i="${idx}"]`);
-      if (row) row.className = 'gd-item ' + it.status;
-      setProgressText(it.name);
-    }
-  }
-
-  await Promise.all([worker(), worker(), worker(), worker()]);
-
-  // 用原列表顺序组装 File，文件名去重并补齐扩展名
-  const taken = new Set(
-    gdTarget === 'pp'
-      ? ppFiles.map(f => f.name.toLowerCase())
-      : cpProducts.map(p => p.name.toLowerCase())
-  );
-  const files = [];
-  picked.sort((a, b) => a.idx - b.idx).forEach(({ it }) => {
-    if (!it.blob) return;
-    const name = gdUniqueName(gdEnsureExt(it.name.trim() || ('image-' + it.id), it.mimeType), taken);
-    files.push(new File([it.blob], name, { type: it.mimeType }));
-  });
-
-  if (files.length > 0) {
-    if (gdTarget === 'pp') ppAddFiles(files);
-    else cpLoadProductsAndRebuild(files);
-
-    const logId = gdTarget === 'pp' ? 'pp-log' : 'cp-log';
-    let msg = `${t('gd_log_imported')} ${ok}/${total}`;
-    if (fail) msg += (currentLang === 'zh' ? '，' : ', ') + t('gd_log_failed') + ' ' + fail;
-    log(logId, msg, fail ? 'warn' : 'ok');
-    console.log('Google Drive import →', gdTarget, files.map(f => f.name));
-  }
-
-  // 结果摘要（不弹窗打扰，直接显示在弹窗里）
-  const summary = document.getElementById('gd-summary');
-  let html = gdEscape(t('gd_summary_ok').replace('{x}', ok));
-  if (fail) html += gdEscape(t('gd_summary_fail').replace('{y}', fail));
-  const failedItems = picked.filter(o => o.it.status === 'failed');
-  if (failedItems.length) {
-    html += `<span class="gd-failed-list">${gdEscape(t('gd_failed_title'))}<br>` +
-      failedItems.map(o => '· ' + gdEscape(o.it.name)).join('<br>') + '</span>';
-  }
-  summary.innerHTML = html;
-  summary.className = 'gd-summary' + (fail ? 'fail' : '');
-  summary.style.display = 'block';
-
-  gdFilter = '';
-  document.getElementById('gd-filter-input').value = '';
-  gdRenderList();
-  gdPhase = 'done';
-  gdRefreshModalTexts();
-}
-
-// ═══════════════════════════════════════════════════════
-//  表格查找模式（OAuth 登录 + SKU 搜索 + 产品名兜底）
-// ═══════════════════════════════════════════════════════
-const GD_CLIENT_ID_KEY = 'gdrive_client_id';
-const GD_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
-const GD_MAX_CANDS = 100;          // 单个 SKU 最多取多少张候选图
-const GD_SHEET_CONC = 3;          // 同时查找的行数
-
-let gdToken = null;
-let gdTokenClient = null;
-let gdTokenClientCid = '';      // 记住当前 token 客户端用的客户端 ID，换了 ID 要重新建
-let gdSheetAOA = [];              // 表格原始二维数组（含表头）
-let gdSheetColSku = -1;
-let gdSheetColName = -1;
-let gdSheetColModel = -1;
-let gdRows = [];                  // [{sku,name,model,status:'searching'|'sku'|'model'|'name'|'kw'|'none',
-                                  //   hitKeyword,cands:[{id,name,mimeType,size,picked,blob,objUrl}],resInput,researchOpen,researching}]
-let gdSheetRunning = false;
-let gdSheetImporting = false;
-let gdSheetDone = false;
-let gdSheetView = 'setup';        // setup（设置页）| review（搜索结果页）
-let gdSheetBaseQ = '';            // 本次全量搜索的公共查询条件（单组重搜时复用）
-let gdSheetLastOk = 0;              // 上次加载成功张数（用于语言切换后重画统计）
-let gdSheetLastFailedNames = [];    // 上次加载失败的文件名
-let gdThumbCache = new Map();
-let gdThumbObserver = null;
-let gdLb = { ri: -1, ci: -1, seq: 0 }; // 大图灯箱当前看的组/候选，seq 防止异步串台
-let gdLbKeyBound = false;
-
-function gdLoadScript(src) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = src; s.async = true;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('load failed: ' + src));
-    document.head.appendChild(s);
-  });
 }
 
 // ── 登录 / 退出 ───────────────────────────────
@@ -3699,6 +3231,10 @@ async function gdSheetPicked(file) {
     gdGuessColumns();
     gdBuildColumnSelects();
     gdRenderPreview();
+    // Step 2：按认出的列构建"识别到的产品列表"，每行带可改搜索关键词并自动去重
+    gdProdList = [];
+    gdBuildProdList();
+    gdRenderProdList();
 
     document.getElementById('gd-col-config').style.display = '';
     meta.style.color = '#4ade80';
@@ -3708,8 +3244,10 @@ async function gdSheetPicked(file) {
     // 换了新表格：旧的搜索结果、选择状态、结果页统计全部作废，停留在设置页等用户确认列
     gdSheetDone = false;
     gdRows = [];
+    gdProdList = [];
     gdSheetView = 'setup';
     gdSheetShowView('setup');
+    gdSetActiveSteps(2);
     document.getElementById('gd-sheet-results').innerHTML = '';
     document.getElementById('gd-miss-toggle').style.display = 'none';
     document.getElementById('gd-sheet-stat').textContent = '';
@@ -3790,7 +3328,89 @@ function gdRenderPreview() {
     '</tbody></table>';
 }
 
-// 设置页 / 结果页切换（表格模式内部的两阶段，不影响顶部"链接浏览/表格查找"tab）
+// 列映射变化时：刷新预览 + 重建产品识别列表（搜索关键词默认 = 优先级解析结果 SKU→型号→名称）
+function gdColChanged() {
+  gdSheetColSku = parseInt(document.getElementById('gd-col-sku').value, 10);
+  gdSheetColModel = parseInt(document.getElementById('gd-col-model').value, 10);
+  gdSheetColName = parseInt(document.getElementById('gd-col-name').value, 10);
+  gdRenderPreview();
+  gdBuildProdList();
+  gdRenderProdList();
+}
+
+// Step 2：把表格数据行整理成产品列表，每个产品带一个可改"搜索关键词"，并按关键词去重
+function gdBuildProdList() {
+  const rows = gdSheetDataRows();
+  gdProdList = rows.map(r => ({
+    sku: r.sku, model: r.model, name: r.name,
+    keyword: (r.sku || r.model || r.name || '').trim(),
+    dup: false
+  }));
+  gdDedupeProdList();
+}
+
+// 按搜索关键词（忽略大小写）去重：相同关键词只保留第一条，其余标记为重复并排除出搜索/导入
+function gdDedupeProdList() {
+  const seen = new Map();
+  gdProdList.forEach(p => {
+    const k = (p.keyword || '').trim().toLowerCase();
+    if (!k) { p.dup = true; return; } // 没有关键词的行无法搜索，也跳过
+    if (seen.has(k)) { p.dup = true; }
+    else { seen.set(k, p); p.dup = false; }
+  });
+}
+
+function gdRenderProdList() {
+  const box = document.getElementById('gd-prod-list');
+  const rowsEl = document.getElementById('gd-prod-rows');
+  const title = document.getElementById('gd-prod-list-title');
+  const hint = document.getElementById('gd-prod-list-hint');
+  if (!box) return;
+  const valid = gdProdList.filter(p => !p.dup);
+  const dups = gdProdList.length - valid.length;
+  title.textContent = (currentLang === 'zh' ? '识别到的产品（' : 'Products (') + valid.length + ')';
+  hint.textContent = dups > 0
+    ? (currentLang === 'zh' ? '已自动去重 ' + dups + ' 条' : dups + ' duplicate(s) removed')
+    : '';
+  rowsEl.innerHTML = gdProdList.map((p, i) => {
+    const sku = p.sku ? gdEscape(p.sku) : '<i>—</i>';
+    const name = p.name ? gdEscape(p.name) : '<i>—</i>';
+    const model = p.model ? gdEscape(p.model) : '<i>—</i>';
+    const dupTag = p.dup ? `<span class="gd-prod-dup">${gdEscape(t('gd_dup'))}</span>` : '';
+    return `<div class="gd-prod-item ${p.dup ? 'is-dup' : ''}" data-i="${i}">
+      <div class="gd-prod-idx">${i + 1}</div>
+      <div class="gd-prod-info">
+        <span class="gd-prod-sku">SKU: ${sku}</span>
+        <span class="gd-prod-name">名称: ${name}</span>
+        <span class="gd-prod-model">型号: ${model}</span>
+      </div>
+      <div class="gd-prod-kw">
+        <input type="text" value="${gdEscape(p.keyword)}" placeholder="${gdEscape(t('gd_kw_placeholder'))}"
+          oninput="gdProdKwInput(${i}, this.value)" ${p.dup ? 'disabled' : ''}>
+      </div>
+      ${dupTag}
+    </div>`;
+  }).join('');
+  box.style.display = gdProdList.length ? '' : 'none';
+}
+
+// 用户在产品列表里改了某行的搜索关键词 → 实时重新去重
+function gdProdKwInput(i, val) {
+  if (!gdProdList[i]) return;
+  gdProdList[i].keyword = val;
+  gdDedupeProdList();
+  gdRenderProdList();
+}
+
+// 顶部分步骤指示：把第 1..n 步标记为已完成/当前（线性流程：上传表格→产品识别→搜图→选图→导入）
+function gdSetActiveSteps(n) {
+  document.querySelectorAll('#gd-steps .gd-step-chip').forEach(chip => {
+    const s = parseInt(chip.getAttribute('data-step'), 10);
+    chip.classList.toggle('active', s <= n);
+  });
+}
+
+// 设置页 / 结果页切换（统一流程内部的两阶段）
 function gdSheetShowView(view) {
   gdSheetView = view;
   document.getElementById('gd-sheet-setup').style.display = view === 'setup' ? '' : 'none';
@@ -3801,6 +3421,7 @@ function gdSheetBackToSetup() {
   if (gdSheetRunning || gdSheetImporting) return;
   gdCloseLightbox();
   gdSheetShowView('setup');
+  gdSetActiveSteps(2);
 }
 
 // 语言切换后重画分组里的徽章/按钮文字
@@ -3859,18 +3480,13 @@ async function gdSheetSearch() {
     if (!fid) { gdSheetShowError('gd_sheet_err_folder'); gdSheetShowView('setup'); return; }
   }
 
-  // 去重：SKU/型号/名称完全相同的行只查一次
-  const seen = new Set();
-  const rows = gdSheetDataRows().filter(r => {
-    const k = (r.sku || '§' + r.model + '§' + r.name).toLowerCase();
-    if (seen.has(k)) return false;
-    seen.add(k); return true;
-  });
-  if (rows.length === 0) { gdSheetShowError('gd_sheet_err_empty'); return; }
+  // 使用 Step 2 识别出的产品列表（已按搜索关键词去重，重复项已排除）
+  const products = gdProdList.filter(p => !p.dup);
+  if (products.length === 0) { gdSheetShowError('gd_sheet_err_empty'); return; }
 
   // 每次都是全新搜索：旧候选和勾选全部清空，绝不自动选中任何图片
-  gdRows = rows.map(r => ({
-    sku: r.sku, model: r.model, name: r.name,
+  gdRows = products.map(p => ({
+    sku: p.sku, model: p.model, name: p.name, keyword: p.keyword,
     status: 'searching', cands: [],
     hitKeyword: '', resInput: '', researchOpen: false, researching: false
   }));
@@ -3885,6 +3501,7 @@ async function gdSheetSearch() {
   document.getElementById('gd-sheet-progress-bar').style.width = '0%';
   document.getElementById('gd-sheet-run').disabled = true;
   gdSheetShowView('review');   // 搜索一开始就进入结果页，进度和每组结果在同一页呈现
+  gdSetActiveSteps(3);
   gdSyncFooter();
 
   try {
@@ -3906,7 +3523,7 @@ async function gdSheetSearch() {
         if (gdAbort) return;
         const ri = cursor++;
         const row = gdRows[ri];
-        const qLabel = row.sku || row.model || row.name;
+        const qLabel = row.keyword || row.sku || row.model || row.name;
         document.getElementById('gd-sheet-progress-text').textContent =
           t('gd_sheet_searching').replace('{x}', done).replace('{n}', total)
             .replace('{q}', qLabel.length > 36 ? qLabel.slice(0, 36) + '…' : qLabel);
@@ -3918,11 +3535,13 @@ async function gdSheetSearch() {
           if (gdAbort) return;
           try {
             let files = [];
-            // 按优先级逐个关键词试，谁先命中就停，并记下实际命中的关键词
+            // 优先用用户在 Step 2 里确认/修改过的"搜索关键词"；若没命中，再按
+            // 优先级 SKU→型号→名称 兜底试一次，并记下实际命中的关键词
             const tiers = [];
-            if (row.sku) tiers.push(['sku', row.sku]);
-            if (row.model) tiers.push(['model', row.model]);
-            if (row.name) tiers.push(['name', row.name]);
+            if (row.keyword) tiers.push(['kw', row.keyword]);
+            if (row.sku && row.sku !== row.keyword) tiers.push(['sku', row.sku]);
+            if (row.model && row.model !== row.keyword) tiers.push(['model', row.model]);
+            if (row.name && row.name !== row.keyword) tiers.push(['name', row.name]);
             for (const [st, kw] of tiers) {
               if (files.length) break;
               files = await gdDriveQueryAll(`${baseQ} and (fullText contains '${gdQ(kw)}')`);
@@ -4005,6 +3624,7 @@ async function gdSheetSearch() {
     document.getElementById('gd-sheet-progress').style.display = 'none';
     gdSheetDone = false;
     gdSheetShowView('review');
+    gdSetActiveSteps(4);   // 搜索完成，进入"选图"阶段
     gdRenderAllGroups();
     gdInitThumbObserver();
     gdUpdateSheetStat();
@@ -4338,10 +3958,10 @@ function gdInitThumbObserver() {
 
 async function gdLoadThumb(id) {
   if (gdThumbCache.has(id)) return gdThumbCache.get(id);
-  let url = `${GD_API}/files/${encodeURIComponent(id)}/thumbnail?supportsAllDrives=true`;
+  // 表格模式只走 OAuth 令牌（私有文件），缩略图必须带 Bearer 授权
+  const url = `${GD_API}/files/${encodeURIComponent(id)}/thumbnail?supportsAllDrives=true`;
   const headers = {};
   if (gdToken) headers['Authorization'] = 'Bearer ' + gdToken;
-  else url += '&key=' + encodeURIComponent((document.getElementById('gd-key-input').value || '').trim());
   const res = await fetch(url, { headers });
   if (!res.ok) throw new Error('thumb ' + res.status);
   const blob = await res.blob();
@@ -4413,6 +4033,7 @@ async function gdSheetImport() {
 
   gdSheetImporting = false;
   gdSheetDone = true;
+  gdSetActiveSteps(5);   // 已加载到产品列表，整条流程走完
   document.getElementById('gd-sheet-progress').style.display = 'none';
   // 记住结果，语言切换时用新语言重画这行
   gdSheetLastOk = files.length;
