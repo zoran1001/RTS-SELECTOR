@@ -844,6 +844,16 @@ input[type="checkbox"] {
   border-radius: var(--radius-sm); padding: 9px 11px; cursor: pointer;
 }
 .gd-sheet-file:hover { border-color: var(--red); }
+.gd-sheet-file-row { display: flex; gap: 8px; align-items: stretch; }
+.gd-sheet-file-row .gd-sheet-file { flex: 1; }
+.gd-sheet-refresh {
+  flex: 0 0 auto; font-size: 11px; font-weight: 600; color: var(--white-2);
+  background: var(--black-3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 9px 14px; cursor: pointer;
+  white-space: nowrap; transition: all .15s;
+}
+.gd-sheet-refresh:hover { border-color: var(--red); color: var(--red-bright); }
+.gd-sheet-refresh:disabled { opacity: .5; cursor: default; }
 .gd-sheet-meta { font-size: 11px; color: #4ade80; margin-top: 8px; }
 .gd-col-map { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .gd-col-map > div { flex: 1; min-width: 180px; }
@@ -1068,9 +1078,15 @@ input[type="checkbox"] {
           <div class="gd-step" id="gd-step2-text">② 上传表格（Excel / CSV）</div>
           <input type="file" id="gd-sheet-input" accept=".xlsx,.xls,.csv" style="display:none"
             onchange="gdSheetPicked(this.files[0])">
-          <button class="gd-sheet-file" id="gd-sheet-pick" onclick="document.getElementById('gd-sheet-input').click()">
-            点击选择 .xlsx / .xls / .csv 表格文件
-          </button>
+          <div class="gd-sheet-file-row">
+            <button class="gd-sheet-file" id="gd-sheet-pick" onclick="document.getElementById('gd-sheet-input').click()">
+              点击选择 .xlsx / .xls / .csv 表格文件
+            </button>
+            <button class="gd-sheet-refresh" id="gd-sheet-refresh" onclick="gdSheetRefresh()"
+              title="用已读入的表格重新识别列、重建产品列表（不重新选文件）" style="display:none">
+              <span id="gd-sheet-refresh-text">刷新表格</span>
+            </button>
+          </div>
           <div class="gd-sheet-meta" id="gd-sheet-meta"></div>
 
           <div id="gd-col-config" style="display:none">
@@ -1180,7 +1196,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.9</span>
+  <span class="header-version">v2.10</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -1722,6 +1738,9 @@ const translations = {
     'gd_sheet_pick': '点击选择 .xlsx / .xls / .csv 表格文件',
     'gd_sheet_xlsx_loading': '正在加载表格解析组件...',
     'gd_sheet_loaded': '已读取 {n} 行数据（第一行按表头处理），请确认下面几列选对了',
+    'gd_sheet_refresh': '刷新表格',
+    'gd_sheet_refreshed': '已重新解析',
+    'gd_sheet_refresh_none': '还没有读取到表格，请先选择表格文件',
     'gd_col_sku_label': '哪一列是 SKU / 货号？（最优先搜索）',
     'gd_col_model_label': '哪一列是型号？（没有可不选）',
     'gd_col_name_label': '哪一列是产品名称？（兜底搜索）',
@@ -1952,6 +1971,9 @@ const translations = {
     'gd_sheet_pick': 'Choose a .xlsx / .xls / .csv file',
     'gd_sheet_xlsx_loading': 'Loading spreadsheet parser...',
     'gd_sheet_loaded': '{n} data rows read (first row treated as headers). Please confirm the columns below',
+    'gd_sheet_refresh': 'Refresh table',
+    'gd_sheet_refreshed': 're-parsed',
+    'gd_sheet_refresh_none': 'No table loaded yet — please choose a spreadsheet file first',
     'gd_col_sku_label': 'Which column is the SKU / item code? (searched first)',
     'gd_col_model_label': 'Which column is the model number? (optional)',
     'gd_col_name_label': 'Which column is the product name? (fallback search)',
@@ -2143,6 +2165,7 @@ function applyTranslations() {
   setText('#gd-back-setup-btn', t('gd_back_setup'));
   setText('#gd-sheet-run-text', t('gd_sheet_run'));
   setText('#gd-sheet-pick', t('gd_sheet_pick'));
+  setText('#gd-sheet-refresh-text', t('gd_sheet_refresh'));
   setText('#gd-debug-title', t('gd_debug_title'));
   const cidInput = document.getElementById('gd-client-id');
   const sheetFolder = document.getElementById('gd-sheet-folder');
@@ -2972,6 +2995,8 @@ function gdOpen(target) {
   document.getElementById('gd-client-id').value = localStorage.getItem('gdrive_client_id') || '';
   document.getElementById('gd-sheet-folder').value = '';
   gdSheetAOA = [];
+  gdSheetFileName = '';
+  document.getElementById('gd-sheet-refresh').style.display = 'none';
   gdProdList = [];
   gdRows = [];
   gdSheetDone = false;
@@ -3207,6 +3232,7 @@ let gdToken = null;
 let gdTokenClient = null;
 let gdTokenClientCid = '';      // 记住当前 token 客户端用的客户端 ID，换了 ID 要重新建
 let gdSheetAOA = [];              // 表格原始二维数组（含表头）
+let gdSheetFileName = '';         // 当前表格文件名（供"刷新表格"重新解析时回显）
 let gdSheetColSku = -1;
 let gdSheetColName = -1;
 let gdSheetColModel = -1;
@@ -3508,37 +3534,66 @@ async function gdSheetPicked(file) {
     if (aoa.length < 2) { gdSheetShowError('gd_sheet_err_empty'); meta.textContent = ''; return; }
 
     gdSheetAOA = aoa;
-    gdGuessColumns();
-    gdBuildColumnSelects();
-    gdRenderPreview();
-    // Step 2：按认出的列构建"识别到的产品列表"，每行带可改搜索关键词并自动去重
-    gdProdList = [];
-    gdBuildProdList();
-    gdRenderProdList();
-
-    document.getElementById('gd-col-config').style.display = '';
+    gdSheetFileName = file.name;
+    gdSheetApplyAOA();
+    document.getElementById('gd-sheet-refresh').style.display = '';
     meta.style.color = '#4ade80';
-    meta.textContent = '📄 ' + gdEscape(file.name) + ' · ' +
+    meta.textContent = '📄 ' + file.name + ' · ' +
       t('gd_sheet_loaded').replace('{n}', gdSheetDataRows().length);
-    document.getElementById('gd-sheet-run').disabled = false;
-    // 换了新表格：旧的搜索结果、选择状态、结果页统计全部作废，停留在设置页等用户确认列
-    gdSheetDone = false;
-    gdRows = [];
-    gdProdList = [];
-    gdSheetView = 'setup';
-    gdSheetShowView('setup');
-    gdSetActiveSteps(2);
-    document.getElementById('gd-sheet-results').innerHTML = '';
-    document.getElementById('gd-miss-toggle').style.display = 'none';
-    document.getElementById('gd-sheet-stat').textContent = '';
-    document.getElementById('gd-review-counts').textContent = '';
-    gdSyncFooter();
   } catch (e) {
     console.error('Sheet parse failed:', e);
     gdSheetShowError('gd_sheet_err_parse', e.message === 'parser-unavailable'
       ? 'XLSX parser CDN unavailable' : e.message);
     meta.textContent = '';
   }
+}
+
+// 用已读入的 gdSheetAOA 重新识别列 → 重建下拉 → 预览 → 重建产品列表。
+// 表格文件解析成功后、以及点"刷新表格"时都走这里，保证两者结果完全一致。
+// keepCols=true 时保留用户当前已选好的列（刷新场景），否则重新自动识别（首次解析）。
+function gdSheetApplyAOA(keepCols) {
+  const prev = keepCols ? [gdSheetColSku, gdSheetColModel, gdSheetColName] : null;
+  gdGuessColumns();
+  if (prev) {
+    const nCols = (gdSheetAOA[0] || []).length;
+    const valid = v => Number.isInteger(v) && v >= -1 && v < nCols;
+    if (valid(prev[0])) gdSheetColSku = prev[0];
+    if (valid(prev[1])) gdSheetColModel = prev[1];
+    if (valid(prev[2])) gdSheetColName = prev[2];
+  }
+  gdBuildColumnSelects();
+  gdRenderPreview();
+  gdProdList = [];
+  gdBuildProdList();
+  gdRenderProdList();
+
+  document.getElementById('gd-col-config').style.display = '';
+  document.getElementById('gd-sheet-run').disabled = false;
+  // 重新解析后，旧的搜索结果、选择状态、结果页统计全部作废，回到设置页等用户确认列
+  gdSheetDone = false;
+  gdRows = [];
+  gdSheetView = 'setup';
+  gdSheetShowView('setup');
+  gdSetActiveSteps(2);
+  document.getElementById('gd-sheet-results').innerHTML = '';
+  document.getElementById('gd-miss-toggle').style.display = 'none';
+  document.getElementById('gd-sheet-stat').textContent = '';
+  document.getElementById('gd-review-counts').textContent = '';
+  gdSyncFooter();
+}
+
+// "刷新表格"：不重新选文件，用当前已读入的表格数据重新解析一遍
+// （保留用户已手动选好的列映射，只重建预览与产品列表）
+function gdSheetRefresh() {
+  if (!gdSheetAOA.length) { gdSheetShowError('gd_sheet_refresh_none'); return; }
+  if (gdSheetRunning || gdSheetImporting) return;   // 搜索/加载中不允许重解析
+  gdSheetClearError();
+  const meta = document.getElementById('gd-sheet-meta');
+  gdSheetApplyAOA(true);
+  meta.style.color = '#4ade80';
+  meta.textContent = '📄 ' + (gdSheetFileName || '') + ' · ' +
+    t('gd_sheet_loaded').replace('{n}', gdSheetDataRows().length) + ' · ' + t('gd_sheet_refreshed');
+  gdDebug('info', '表格已重新解析：' + gdSheetDataRows().length + ' 行');
 }
 
 function gdSheetDataRows() {
