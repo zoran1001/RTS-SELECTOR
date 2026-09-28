@@ -955,6 +955,25 @@ input[type="checkbox"] {
 .gd-sheet-stat { font-size: 11px; color: var(--white-3); margin-top: 10px; line-height: 1.8; }
 .gd-sheet-stat b { color: var(--white); }
 
+/* 调试日志面板（UI 可见，不只靠 console） */
+.gd-debug { margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.gd-debug-head { display: flex; align-items: center; gap: 10px; padding: 7px 10px; background: var(--black-3); font-size: 12px; }
+.gd-debug-title { font-weight: 700; color: var(--white); }
+.gd-debug-counts { color: var(--white-3); font-size: 11px; }
+.gd-debug-counts b { color: var(--white); }
+.gd-debug-body { max-height: 200px; overflow-y: auto; padding: 6px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.7; background: var(--black-2); }
+.gd-dbg-line { white-space: pre-wrap; word-break: break-word; color: var(--white-3); }
+.gd-dbg-ts { color: var(--white-4); margin-right: 6px; }
+.gd-dbg-ok { color: #3ecf8e; }
+.gd-dbg-miss { color: #f5a623; }
+.gd-dbg-err { color: #ff5c5c; }
+.gd-dbg-warn { color: #f5d423; }
+.gd-dbg-search { color: #6cb6ff; }
+.gd-dbg-oauth { color: #c792ea; }
+.gd-dbg-state { color: var(--white); font-weight: 700; }
+.gd-err-btn { display: inline-block; margin-top: 8px; margin-left: 0; padding: 6px 12px; background: var(--red); color: #fff; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-ui); }
+.gd-err-btn:hover { filter: brightness(1.08); }
+
 /* 大图查看灯箱（只盖住弹窗内部） */
 .gd-lb {
   position: absolute; inset: 0; z-index: 30;
@@ -1110,6 +1129,16 @@ input[type="checkbox"] {
           <button class="gd-miss-toggle" id="gd-miss-toggle" style="display:none" onclick="gdToggleMiss()"></button>
           <div class="gd-miss-list" id="gd-miss-list"></div>
           <div class="gd-sheet-stat" id="gd-sheet-stat"></div>
+
+          <!-- 调试日志：OAuth 状态 / 当前产品 / 请求状态 / 成功·未找到·失败计数 / 错误原因（UI 可见） -->
+          <div class="gd-debug" id="gd-debug">
+            <div class="gd-debug-head">
+              <span class="gd-debug-title" id="gd-debug-title">调试日志</span>
+              <span class="gd-debug-counts" id="gd-debug-counts"></span>
+              <button class="gd-mini-btn" id="gd-debug-toggle-btn" onclick="gdDebugToggle()" style="margin-left:auto">日志</button>
+            </div>
+            <div class="gd-debug-body" id="gd-debug-log" style="display:none"></div>
+          </div>
         </div><!-- /gd-sheet-review -->
 
         <div class="gd-err" id="gd-sheet-err"></div>
@@ -1151,7 +1180,7 @@ input[type="checkbox"] {
     </div>
     <span class="header-title">Image<span>Tools</span></span>
   </div>
-  <span class="header-version">v2.5</span>
+  <span class="header-version">v2.6</span>
   <span class="header-notice">本地处理 · 文件不上传服务器</span>
   <button id="lang-toggle" class="lang-btn" onclick="switchLanguage()">EN</button>
 </header>
@@ -1685,7 +1714,7 @@ const translations = {
     'gd_logout': '退出登录',
     'gd_auth_no': '未登录',
     'gd_auth_ok': '已登录 · 只读权限',
-    'gd_oauth_help_html': '不用改文件夹共享权限，用你自己账号登录就能搜。首次配置约 5 分钟：① 在<a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">谷歌云控制台</a>配置「OAuth 同意屏幕」（选外部，把你自己邮箱加到测试用户）；② 在<a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">客户端页面</a>创建「<b>网页应用</b>」客户端，把本工具网址加到「已授权的 JavaScript 来源」：本地填 <code>http://localhost:8765</code>，GitHub Pages 填 <code>https://zoran1001.github.io</code>（<b>不含 /RTS-SELECTOR/ 路径</b>，来源只看域名）。复制客户端 ID 填到上面；③ 登录出现"Google 未验证"提示，点「高级 → 继续前往」即可，只有你自己用。当前运行来源见上方"当前 OAuth 来源"。',
+    'gd_oauth_help_html': '不用改文件夹共享权限，用你自己账号登录就能搜。首次配置约 5 分钟：① 在<a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">谷歌云控制台</a>配置「OAuth 同意屏幕」（选外部，把你自己邮箱加到测试用户）；② 在<a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">客户端页面</a>创建「<b>网页应用</b>」客户端，把本工具网址加到「已授权的 JavaScript 来源」：本地填 <code>http://localhost:8765</code>（若用 127.0.0.1 访问，需另加 <code>http://127.0.0.1:8765</code>），GitHub Pages 填 <code>https://zoran1001.github.io</code>（<b>不含 /RTS-SELECTOR/ 路径</b>，来源只看域名）。复制客户端 ID 填到上面；③ 登录出现"Google 未验证"提示，点「高级 → 继续前往」即可，只有你自己用。当前运行来源见上方"当前 OAuth 来源"。',
     'gd_sheet_step1': '① 限定文件夹（可选，不填＝搜你账号能看到的所有云盘）',
     'gd_sheet_folder_ph': '可选：粘贴文件夹链接，搜索范围只限这里',
     'gd_sheet_step2': '② 上传表格（Excel / CSV）',
@@ -1731,7 +1760,32 @@ const translations = {
     'gd_sheet_err_empty': '表格里没读到数据行',
     'gd_sheet_err_parse': '表格读不出来，请用 Excel 另存为 .xlsx 或 CSV 后再试',
     'gd_sheet_err_folder': '文件夹链接认不出来，要么清空它（搜整个云盘），要么粘贴正确的链接',
-    'gd_token_expired': '登录已过期或权限不足，请重新点「登录谷歌账号」',
+    'gd_token_expired': 'Google 登录已失效，请重新登录。',
+    // OAuth / 搜索 调试与状态文案
+    'gd_relogin': '重新登录 Google',
+    'gd_login_timeout': '登录超时：Google 登录窗口未响应（可能被浏览器拦截），请重试',
+    'gd_login_error': 'Google 登录失败：{e}',
+    'gd_login_loadfail': 'Google 登录组件加载失败：',
+    'gd_debug_login_ok': 'Google 登录成功',
+    'gd_debug_login_fail': 'Google 登录失败：{e}',
+    'gd_debug_logout': '已退出 Google 登录',
+    'gd_debug_title': '调试日志',
+    'gd_debug_start': '开始搜索 {n} 个产品',
+    'gd_debug_scan': '正在扫描文件夹...',
+    'gd_debug_scan_done': '已扫描到 {n} 个子文件夹',
+    'gd_debug_cur': '正在搜索 {x}/{n}：{q}',
+    'gd_debug_miss': '未找到：{q}',
+    'gd_debug_found': '找到 {q}：{c} 张候选',
+    'gd_debug_authfail': '令牌失效（{q} 停止）：{e}',
+    'gd_debug_authfail_state': '登录已失效，已停止搜索，请重新登录 Google',
+    'gd_debug_404': '资源不存在（{q} 当作未找到）',
+    'gd_debug_ratelimit': '限流，{q} 等待 {s}s 后重试',
+    'gd_debug_retry': '{q} 请求异常（{e}），等待 {s}s 重试',
+    'gd_debug_fail': '搜索失败（{q}）：{e}',
+    'gd_debug_fatal': '搜索异常中断：{e}',
+    'gd_debug_cancelled': '已取消搜索',
+    'gd_debug_done': '搜索完成：成功 {o} · 未找到 {m} · 失败 {f}',
+    'gd_sheet_timeout': '搜索超时，请重试',
     // Status
     'dir_selected': '已选择输出目录',
     'dir_select_failed': '选择目录失败',
@@ -1890,7 +1944,7 @@ const translations = {
     'gd_logout': 'Sign out',
     'gd_auth_no': 'Not signed in',
     'gd_auth_ok': 'Signed in · read-only',
-    'gd_oauth_help_html': 'No folder sharing changes needed — sign in with your own account. One-time setup (~5 min): ① Configure the <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">OAuth consent screen</a> (External, add your own email as a test user); ② Create a <a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">Web application client</a> and add this tool\'s URL to "Authorized JavaScript origins": use <code>http://localhost:8765</code> for local, or <code>https://zoran1001.github.io</code> for GitHub Pages (<b>no /RTS-SELECTOR/ path</b> — origin is domain only), then paste the client ID above; ③ On the "Google hasn\'t verified this app" screen, click "Advanced → Go to…". Only you use it. Your current origin is shown above as "Current OAuth origin".',
+    'gd_oauth_help_html': 'No folder sharing changes needed — sign in with your own account. One-time setup (~5 min): ① Configure the <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">OAuth consent screen</a> (External, add your own email as a test user); ② Create a <a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener">Web application client</a> and add this tool\'s URL to "Authorized JavaScript origins": use <code>http://localhost:8765</code> for local (add <code>http://127.0.0.1:8765</code> too if you open via 127.0.0.1), or <code>https://zoran1001.github.io</code> for GitHub Pages (<b>no /RTS-SELECTOR/ path</b> — origin is domain only), then paste the client ID above; ③ On the "Google hasn\'t verified this app" screen, click "Advanced → Go to…". Only you use it. Your current origin is shown above as "Current OAuth origin".',
     'gd_sheet_step1': '① Limit to a folder (optional — empty means search everything your account can see)',
     'gd_sheet_folder_ph': 'Optional: paste a folder link to search only inside it',
     'gd_sheet_step2': '② Upload a spreadsheet (Excel / CSV)',
@@ -1936,7 +1990,32 @@ const translations = {
     'gd_sheet_err_empty': 'No data rows found in the spreadsheet',
     'gd_sheet_err_parse': 'Cannot parse this file. Re-save it as .xlsx or CSV and try again',
     'gd_sheet_err_folder': 'Folder link not recognized. Either clear it (search all Drive) or paste a valid link',
-    'gd_token_expired': 'Sign-in expired or insufficient permission. Please click "Sign in with Google" again',
+    'gd_token_expired': 'Google sign-in expired. Please sign in again.',
+    // OAuth / search debug & status
+    'gd_relogin': 'Sign in with Google again',
+    'gd_login_timeout': 'Sign-in timed out: the Google window did not respond (possibly blocked). Please retry',
+    'gd_login_error': 'Google sign-in failed: {e}',
+    'gd_login_loadfail': 'Failed to load Google sign-in component: ',
+    'gd_debug_login_ok': 'Signed in to Google',
+    'gd_debug_login_fail': 'Google sign-in failed: {e}',
+    'gd_debug_logout': 'Signed out of Google',
+    'gd_debug_title': 'Debug log',
+    'gd_debug_start': 'Starting search for {n} products',
+    'gd_debug_scan': 'Scanning folders...',
+    'gd_debug_scan_done': 'Found {n} subfolders',
+    'gd_debug_cur': 'Searching {x}/{n}: {q}',
+    'gd_debug_miss': 'Not found: {q}',
+    'gd_debug_found': 'Found {q}: {c} candidates',
+    'gd_debug_authfail': 'Token invalid (stopped at {q}): {e}',
+    'gd_debug_authfail_state': 'Sign-in expired, search stopped. Please sign in again',
+    'gd_debug_404': 'Resource not found ({q} treated as not found)',
+    'gd_debug_ratelimit': 'Rate limited, {q} waiting {s}s',
+    'gd_debug_retry': '{q} request error ({e}), retry in {s}s',
+    'gd_debug_fail': 'Search failed ({q}): {e}',
+    'gd_debug_fatal': 'Search interrupted: {e}',
+    'gd_debug_cancelled': 'Search cancelled',
+    'gd_debug_done': 'Search done: {o} ok · {m} not found · {f} failed',
+    'gd_sheet_timeout': 'Search timed out, please retry',
     // Status
     'dir_selected': 'Output directory selected',
     'dir_select_failed': 'Failed to select directory',
@@ -2064,6 +2143,7 @@ function applyTranslations() {
   setText('#gd-back-setup-btn', t('gd_back_setup'));
   setText('#gd-sheet-run-text', t('gd_sheet_run'));
   setText('#gd-sheet-pick', t('gd_sheet_pick'));
+  setText('#gd-debug-title', t('gd_debug_title'));
   const cidInput = document.getElementById('gd-client-id');
   const sheetFolder = document.getElementById('gd-sheet-folder');
   if (cidInput) cidInput.placeholder = t('gd_clientid_ph');
@@ -2911,7 +2991,8 @@ function gdSaveRecent(url) {
 }
 
 function gdClose() {
-  if (gdSheetRunning || gdSheetImporting) return;
+  // 任何状态下都允许关闭：搜索中先中止在途请求再关，导入中后台继续直接关
+  if (gdSheetRunning || gdSheetImporting) gdAbortSearch();
   gdCloseLightbox();
   document.getElementById('gdModal').classList.add('hidden');
 }
@@ -2920,9 +3001,18 @@ function gdOnOverlayClick(e) {
   if (e.target === document.getElementById('gdModal')) gdClose();
 }
 
+// 统一"停止/取消"：置取消标志 → abort 所有在途 Drive 请求 → 清理计时器 → 状态变 cancelled
+function gdAbortSearch() {
+  gdAbort = true;
+  if (gdAbortCtrl) { try { gdAbortCtrl.abort(); } catch (_) {} }
+  gdSearchTimers.forEach(t => clearTimeout(t));
+  gdSearchTimers = [];
+  if (gdSheetRunning && gdSearchState !== 'error') gdSearchState = 'cancelled';
+}
+
 function gdCancel() {
-  // 搜索/加载中=停止；结果页=返回设置页；设置页=关闭弹窗
-  if (gdSheetRunning || gdSheetImporting) { gdAbort = true; return; }
+  // 搜索/加载中=停止（并允许随后关闭）；结果页=返回设置页；设置页=关闭弹窗
+  if (gdSheetRunning || gdSheetImporting) { gdAbortSearch(); return; }
   if (gdSheetView === 'review' && !gdSheetDone) { gdSheetBackToSetup(); return; }
   gdClose();
 }
@@ -2974,6 +3064,42 @@ function gdSyncFooter() {
 
 // ── API 请求 ───────────────────────────────
 // 有账号令牌走 Bearer 授权（能看到账号权限内的私有文件）；否则走 API Key（只能看公开文件）
+
+// 带超时的 fetch：单次请求超过 gdReqTimeoutMs 自动中止；同时接入搜索级 AbortController，
+// 点"停止"时可同时中止所有在途请求。超时/取消/网络错误都抛出带 status 的归一化错误。
+async function gdFetchWithTimeout(url, opts, ms) {
+  const ctrl = new AbortController();
+  const onAbort = () => ctrl.abort();
+  if (gdAbortCtrl) {
+    if (gdAbortCtrl.signal.aborted) ctrl.abort();
+    else gdAbortCtrl.signal.addEventListener('abort', onAbort);
+  }
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  gdSearchTimers.push(timer);
+  try {
+    return await fetch(url, Object.assign({ signal: ctrl.signal }, opts));
+  } catch (e) {
+    if (e && e.name === 'AbortError') {
+      if (gdAbortCtrl && gdAbortCtrl.signal.aborted) {
+        const err = new Error('aborted'); err.aborted = true; throw err;
+      }
+      const err = new Error('timeout'); err.status = 'timeout'; throw err;
+    }
+    const err = new Error('network'); err.status = 'network'; throw err;
+  } finally {
+    clearTimeout(timer);
+    const i = gdSearchTimers.indexOf(timer); if (i >= 0) gdSearchTimers.splice(i, 1);
+    if (gdAbortCtrl) gdAbortCtrl.signal.removeEventListener('abort', onAbort);
+  }
+}
+
+// 把任意异常归一化成 { status, message, aborted }，方便上层按 401/403/404/429/timeout/network 处理
+function gdNormErr(e) {
+  if (e && e.aborted) return { status: 'aborted', message: '已取消', aborted: true };
+  if (e && e.status) return { status: e.status, message: e.message || ('HTTP ' + e.status) };
+  return { status: 'unknown', message: (e && e.message) || String(e) };
+}
+
 async function gdApi(path, params, key) {
   const url = new URL(GD_API + path);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -2984,11 +3110,15 @@ async function gdApi(path, params, key) {
     url.searchParams.set('key', (key || '').trim());
   }
 
-  const res = await fetch(url.href, { headers });
-  const data = await res.json().catch(() => ({}));
+  const res = await gdFetchWithTimeout(url.href, { headers }, gdReqTimeoutMs);
+  let data = {};
+  try { data = await res.json(); } catch (_) { data = {}; }
   if (!res.ok) {
     const message = (data.error && data.error.message) || ('HTTP ' + res.status);
-    throw { status: res.status, message, raw: data };
+    const err = new Error(message);
+    err.status = res.status;
+    err.raw = data;
+    throw err;
   }
   return data;
 }
@@ -3085,6 +3215,16 @@ let gdThumbObserver = null;
 let gdLb = { ri: -1, ci: -1, seq: 0 }; // 大图灯箱当前看的组/候选，seq 防止异步串台
 let gdLbKeyBound = false;
 
+// ── 搜索状态机 / 超时 / 调试 ──────────────────
+// 搜索状态：idle | searching | success | error | cancelled（任何情况都必须最终离开 searching）
+let gdSearchState = 'idle';
+let gdAbortCtrl = null;            // 本次搜索的 AbortController：停止时同时中止所有在途 Drive 请求
+let gdReqTimeoutMs = 18000;        // 单次 Drive API 请求超时（毫秒），超时自动中止，绝不无限等待
+let gdSearchTimers = [];           // 需要清理的计时器（重试等待 / 超时 guard），避免泄漏
+let gdDebugLines = [];             // 调试日志行
+let gdDebugCounts = { ok: 0, miss: 0, fail: 0 };  // 成功 / 未找到 / 失败计数
+let gdLoginGuardTimer = null;      // 登录安全计时器：GIS 无响应时兜底结束登录态
+
 function gdLoadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
@@ -3129,6 +3269,20 @@ function gdUniqueName(name, taken) {
 }
 
 // ── 登录 / 退出 ───────────────────────────────
+// 把 GIS 返回的错误对象统一转成可读文案：优先 error_description，其次 message，
+// 再带上 error / type，最后原样 JSON 兜底——确保 UI 上永远能看到 Google 说的原因。
+function gdOAuthErrText(err) {
+  if (!err) return t('gd_login_error').replace('{e}', 'unknown');
+  if (typeof err === 'string') return t('gd_login_error').replace('{e}', err);
+  const code = err.error || err.type || '';
+  const desc = err.error_description || err.message || '';
+  const parts = [];
+  if (desc) parts.push(desc);
+  if (code) parts.push('[' + code + ']');
+  let s = parts.join(' ') || JSON.stringify(err);
+  return t('gd_login_error').replace('{e}', s);
+}
+
 function gdRefreshAuthUI() {
   const statusEl = document.getElementById('gd-auth-status');
   const logoutBtn = document.getElementById('gd-logout-btn');
@@ -3148,6 +3302,24 @@ async function gdLogin() {
   }
   localStorage.setItem(GD_CLIENT_ID_KEY, cid);
 
+  // 清掉任何残留的登录安全计时器，避免上一次登录的兜底误触发
+  if (gdLoginGuardTimer) { clearTimeout(gdLoginGuardTimer); gdLoginGuardTimer = null; }
+
+  const beginLogin = () => {
+    // 安全计时器：GIS 在 60s 内既没回调也没报错（多半是弹窗被浏览器拦截/无响应），
+    // 兜底结束登录态并提示，绝不无限等待、绝不卡死登录 UI。
+    gdLoginGuardTimer = setTimeout(() => {
+      gdLoginGuardTimer = null;
+      if (!gdToken) {
+        gdSheetShowError('', t('gd_login_timeout'));
+        gdRefreshAuthUI();
+        gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', 'timeout'));
+      }
+    }, 60000);
+    // 每次主动登录都弹出账号选择器，绝不自动锁定当前/上次账号，也不使用 login_hint
+    gdTokenClient.requestAccessToken({ prompt: 'select_account' });
+  };
+
   try {
     if (!window.google || !google.accounts) {
       await gdLoadScript('https://accounts.google.com/gsi/client');
@@ -3156,40 +3328,95 @@ async function gdLogin() {
       gdTokenClient = google.accounts.oauth2.initTokenClient({
         client_id: cid,
         scope: GD_SCOPE,
+        // 官方回调：成功/失败/用户取消/弹窗关闭都只走这里，绝不自己轮询 popup.closed
         callback: resp => {
+          if (gdLoginGuardTimer) { clearTimeout(gdLoginGuardTimer); gdLoginGuardTimer = null; }
           if (resp && resp.access_token) {
             gdToken = resp.access_token;
             gdRefreshAuthUI();
             gdSheetClearError();
+            gdDebug('oauth', t('gd_debug_login_ok'));
+          } else if (resp && resp.error) {
+            // 失败 / 用户取消 / 弹窗关闭：都结束登录态，只在非用户主动关闭时报错
+            gdToken = null;
+            gdRefreshAuthUI();
+            if (resp.error !== 'popup_closed' && resp.error !== 'access_denied') {
+              gdSheetShowError('', gdOAuthErrText(resp));
+            }
+            gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', gdOAuthErrText(resp)));
           }
         },
         error_callback: err => {
-          if (err && err.type === 'popup_closed') return;
-          gdSheetShowError('', (err && err.message) || 'OAuth error');
+          if (gdLoginGuardTimer) { clearTimeout(gdLoginGuardTimer); gdLoginGuardTimer = null; }
+          gdToken = null;
+          gdRefreshAuthUI();
+          if (err && err.type === 'popup_closed') return; // 用户关掉弹窗，不算错误
+          // 把 Google 返回的 error / error_description / type 原样显示在 UI（需求 #8/#9）
+          gdSheetShowError('', gdOAuthErrText(err));
+          gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', gdOAuthErrText(err)));
         }
       });
       gdTokenClientCid = cid;
     }
-    // 每次主动登录都弹出账号选择器，绝不自动锁定当前/上次账号，也不使用 login_hint
-    gdTokenClient.requestAccessToken({ prompt: 'select_account' });
+    beginLogin();
   } catch (e) {
+    if (gdLoginGuardTimer) { clearTimeout(gdLoginGuardTimer); gdLoginGuardTimer = null; }
     console.error('GIS load failed:', e);
-    gdSheetShowError('', 'Google 登录组件加载失败：' + (e.message || '') + '（需要能访问 accounts.google.com）');
+    gdSheetShowError('', t('gd_login_loadfail') + (e && (e.message || e.error_description) || e));
+    gdDebug('oauth', t('gd_debug_login_fail').replace('{e}', 'gsi_load: ' + (e && (e.message || e.error_description) || e)));
   }
 }
 
 function gdLogout() {
   gdToken = null;
   gdRefreshAuthUI();
+  gdDebug('oauth', t('gd_debug_logout'));
 }
 
 // ── 错误提示 ───────────────────────────────
 function gdSheetShowError(key, detail) {
   const box = document.getElementById('gd-sheet-err');
   const head = key ? t(key) : (detail || t('error'));
-  box.innerHTML = gdEscape(head) + (key && detail
-    ? `<span class="gd-err-detail">${gdEscape(detail)}</span>` : '');
+  let html = gdEscape(head);
+  if (key && detail) html += `<span class="gd-err-detail">${gdEscape(detail)}</span>`;
+  // 令牌失效：直接在错误框里提供"重新登录 Google"按钮（需求 #9）
+  if (key === 'gd_token_expired') {
+    html += `<button class="gd-err-btn" onclick="gdLogin()">${gdEscape(t('gd_relogin'))}</button>`;
+  }
+  box.innerHTML = html;
   box.style.display = 'block';
+}
+
+// ── 调试日志（UI 可见，不只靠 console） ──────
+function gdDebug(type, msg) {
+  const ts = new Date().toLocaleTimeString();
+  gdDebugLines.push({ ts, type, msg });
+  if (gdDebugLines.length > 300) gdDebugLines.shift();
+  gdRenderDebug();
+}
+function gdDebugReset() {
+  gdDebugLines = [];
+  gdRenderDebug();
+}
+function gdDebugToggle() {
+  const b = document.getElementById('gd-debug-log');
+  if (b) b.style.display = b.style.display === 'block' ? 'none' : 'block';
+}
+function gdRenderDebug() {
+  const log = document.getElementById('gd-debug-log');
+  const counts = document.getElementById('gd-debug-counts');
+  if (!log) return;
+  const colorMap = {
+    ok: 'gd-dbg-ok', miss: 'gd-dbg-miss', error: 'gd-dbg-err', warn: 'gd-dbg-warn',
+    search: 'gd-dbg-search', oauth: 'gd-dbg-oauth', state: 'gd-dbg-state', info: ''
+  };
+  log.innerHTML = gdDebugLines.slice(-60).map(l =>
+    `<div class="gd-dbg-line ${colorMap[l.type] || ''}"><span class="gd-dbg-ts">${l.ts}</span> ${gdEscape(l.msg)}</div>`
+  ).join('');
+  log.scrollTop = log.scrollHeight;
+  if (counts) {
+    counts.innerHTML = `状态 <b>${gdEscape(gdSearchState)}</b> · 成功 <b class="gd-dbg-ok">${gdDebugCounts.ok}</b> · 未找到 <b class="gd-dbg-miss">${gdDebugCounts.miss}</b> · 失败 <b class="gd-dbg-err">${gdDebugCounts.fail}</b>`;
+  }
 }
 function gdSheetClearError() {
   document.getElementById('gd-sheet-err').style.display = 'none';
@@ -3466,11 +3693,11 @@ function gdBuildBaseQuery(folderIds) {
 
 async function gdSheetSearch() {
   gdSheetClearError();
-  if (!gdToken) { gdSheetShowError('gd_sheet_err_login'); gdSheetShowView('setup'); return; }
+  if (!gdToken) {
+    gdSheetShowError('gd_sheet_err_login'); gdSetActiveSteps(2); gdSheetShowView('setup'); return;
+  }
   if (gdSheetAOA.length < 2 || (gdSheetColSku < 0 && gdSheetColModel < 0 && gdSheetColName < 0)) {
-    gdSheetShowError('gd_sheet_err_cols');
-    gdSheetShowView('setup');
-    return;
+    gdSheetShowError('gd_sheet_err_cols'); gdSheetShowView('setup'); return;
   }
 
   // 可选文件夹
@@ -3484,7 +3711,7 @@ async function gdSheetSearch() {
   const products = gdProdList.filter(p => !p.dup);
   if (products.length === 0) { gdSheetShowError('gd_sheet_err_empty'); return; }
 
-  // 每次都是全新搜索：旧候选和勾选全部清空，绝不自动选中任何图片
+  // 全新搜索：清空旧候选与选择
   gdRows = products.map(p => ({
     sku: p.sku, model: p.model, name: p.name, keyword: p.keyword,
     status: 'searching', cands: [],
@@ -3493,6 +3720,10 @@ async function gdSheetSearch() {
   gdSheetRunning = true;
   gdSheetDone = false;
   gdAbort = false;
+  gdSearchState = 'searching';
+  gdAbortCtrl = new AbortController();   // 本次搜索的取消中枢
+  gdSearchTimers = [];
+  gdDebugCounts = { ok: 0, miss: 0, fail: 0 };
   gdCloseLightbox();
   document.getElementById('gd-sheet-results').innerHTML = '';
   document.getElementById('gd-miss-toggle').style.display = 'none';
@@ -3503,14 +3734,19 @@ async function gdSheetSearch() {
   gdSheetShowView('review');   // 搜索一开始就进入结果页，进度和每组结果在同一页呈现
   gdSetActiveSteps(3);
   gdSyncFooter();
+  gdDebugReset();
+  gdDebug('state', t('gd_debug_start').replace('{n}', gdRows.length));
 
+  let fatalAuth = false;
   try {
     // 先解析可选文件夹（递归收集子文件夹 ID）
     let folderIds = null;
     if (folderRaw) {
       const fid = gdParseFolderId(folderRaw);
       gdSaveRecent(folderRaw);
+      gdDebug('info', t('gd_debug_scan'));
       folderIds = await gdCollectFolderIds(fid, '', true);
+      gdDebug('info', t('gd_debug_scan_done').replace('{n}', (folderIds.length - 1)));
     }
     gdSheetBaseQ = gdBuildBaseQuery(folderIds);
     const baseQ = gdSheetBaseQ;
@@ -3524,19 +3760,19 @@ async function gdSheetSearch() {
         const ri = cursor++;
         const row = gdRows[ri];
         const qLabel = row.keyword || row.sku || row.model || row.name;
+        // 实时进度：正在搜索 X / N：SKU/关键词
+        gdDebug('search', t('gd_debug_cur').replace('{x}', done + 1).replace('{n}', total).replace('{q}', qLabel));
         document.getElementById('gd-sheet-progress-text').textContent =
           t('gd_sheet_searching').replace('{x}', done).replace('{n}', total)
             .replace('{q}', qLabel.length > 36 ? qLabel.slice(0, 36) + '…' : qLabel);
 
-        // 同一行最多尝试 6 次：遇到限流就在原地等一等再试，不去动公共游标，
-        // 否则多个工人同时干活时 cursor-- 会和别人抢号，造成漏行或重复
+        // 同一行最多尝试 6 次：限流/网络抖动就在原地等一等再试，不去动公共游标
         let fatal = false;
         for (let attempt = 0; attempt < 6; attempt++) {
           if (gdAbort) return;
           try {
             let files = [];
-            // 优先用用户在 Step 2 里确认/修改过的"搜索关键词"；若没命中，再按
-            // 优先级 SKU→型号→名称 兜底试一次，并记下实际命中的关键词
+            // 优先用 Step 2 里确认/修改过的"搜索关键词"；没命中再按 SKU→型号→名称 兜底
             const tiers = [];
             if (row.keyword) tiers.push(['kw', row.keyword]);
             if (row.sku && row.sku !== row.keyword) tiers.push(['sku', row.sku]);
@@ -3547,7 +3783,7 @@ async function gdSheetSearch() {
               files = await gdDriveQueryAll(`${baseQ} and (fullText contains '${gdQ(kw)}')`);
               if (files.length) { row.status = st; row.hitKeyword = kw; }
             }
-            // 最后兜底：产品名+型号拼一起拆词（每个词都要出现，最多 4 个有效词）
+            // 最后兜底：产品名+型号拆词（每个词都要出现，最多 4 个有效词）
             if (!files.length) {
               const words = [...new Set((row.name + ' ' + row.model).toLowerCase()
                 .split(/[\s/、,，·()（）\-]+/).filter(w => w.length >= 2))].slice(0, 4);
@@ -3559,40 +3795,61 @@ async function gdSheetSearch() {
                 if (files.length) { row.status = 'name'; row.hitKeyword = rest.join(' + '); }
               }
             }
-            if (!files.length) { row.status = 'none'; row.hitKeyword = ''; }
-
-            // 同一行内按 id 去重；新搜索一律默认不勾选，由用户人工挑选
-            const uniq = new Map();
-            files.forEach(f => {
-              if (!uniq.has(f.id)) {
-                uniq.set(f.id, {
-                  id: f.id, name: f.name, mimeType: f.mimeType,
-                  size: parseInt(f.size, 10) || 0, picked: false,
-                  blob: null, objUrl: ''
-                });
-              }
-            });
-            row.cands = [...uniq.values()];
-            break; // 本行成功，跳出重试循环
+            if (!files.length) {
+              row.status = 'none'; row.hitKeyword = '';
+              gdDebugCounts.miss++;
+              gdDebug('miss', t('gd_debug_miss').replace('{q}', qLabel));
+            } else {
+              // 同一行内按 id 去重；新搜索一律默认不勾选，由用户人工挑选
+              const uniq = new Map();
+              files.forEach(f => {
+                if (!uniq.has(f.id)) {
+                  uniq.set(f.id, {
+                    id: f.id, name: f.name, mimeType: f.mimeType,
+                    size: parseInt(f.size, 10) || 0, picked: false,
+                    blob: null, objUrl: ''
+                  });
+                }
+              });
+              row.cands = [...uniq.values()];
+              gdDebugCounts.ok++;
+              gdDebug('ok', t('gd_debug_found').replace('{q}', qLabel).replace('{c}', row.cands.length));
+            }
+            break; // 本行成功（含未找到），跳出重试循环
           } catch (e) {
-            if (e.aborted) return;
-            if (e.status === 401 || e.status === 403) {
-              // 登录失效：停下所有工人，提示重新登录
-              gdSheetShowError('gd_token_expired', e.message);
+            const err = gdNormErr(e);
+            if (err.aborted) return;                       // 被停止/取消，整个流程收尾处理
+            if (err.status === 401 || err.status === 403) {
+              // 令牌失效 / 权限不足：立即停止全部，提示重新登录，不再发任何 Drive 请求
+              fatalAuth = true;
               gdAbort = true;
+              gdDebug('error', t('gd_debug_authfail').replace('{q}', qLabel).replace('{e}', err.message));
+              gdSheetShowError('gd_token_expired', err.message);
               fatal = true;
               break;
             }
-            const limited = e.status === 429 || /rateLimit|quota/i.test(e.message || '');
+            if (err.status === 404) {
+              // 某个资源/文件夹不存在：本组当作未找到，继续下一个产品，不卡死
+              row.status = 'none'; row.cands = [];
+              gdDebugCounts.miss++;
+              gdDebug('miss', t('gd_debug_404').replace('{q}', qLabel));
+              break;
+            }
+            const limited = err.status === 429 || /rateLimit|quota|rate_limit/i.test(err.message || '');
             if (limited && attempt < 5) {
-              // 等待时间逐次拉长：1.5s、3s、4.5s……
-              await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+              gdDebug('warn', t('gd_debug_ratelimit').replace('{q}', qLabel).replace('{s}', (1.5 * (attempt + 1))));
+              await new Promise(r => { const tm = setTimeout(r, 1500 * (attempt + 1)); gdSearchTimers.push(tm); });
               continue;
             }
-            console.error('Row search failed:', row.sku, e);
-            row.status = 'none';
-            row.hitKeyword = '';
-            row.cands = [];
+            // 网络错误 / 超时 / 其他：重试，超过次数则本组失败、继续下一个产品
+            if ((err.status === 'network' || err.status === 'timeout' || err.status === 'unknown') && attempt < 5) {
+              gdDebug('warn', t('gd_debug_retry').replace('{q}', qLabel).replace('{e}', err.message).replace('{s}', (1.5 * (attempt + 1))));
+              await new Promise(r => { const tm = setTimeout(r, 1500 * (attempt + 1)); gdSearchTimers.push(tm); });
+              continue;
+            }
+            row.status = 'none'; row.cands = [];
+            gdDebugCounts.fail++;
+            gdDebug('error', t('gd_debug_fail').replace('{q}', qLabel).replace('{e}', err.message));
             break;
           }
         }
@@ -3609,19 +3866,33 @@ async function gdSheetSearch() {
 
     await Promise.all(Array.from({ length: GD_SHEET_CONC }, worker));
   } catch (e) {
-    if (!e.aborted) {
-      console.error('Sheet search failed:', e);
-      gdSheetShowError('', e.message || String(e));
+    const err = gdNormErr(e);
+    if (!err.aborted) {
+      // 外层异常（如文件夹扫描阶段）：明确显示在 UI，不只在 console
+      gdDebug('error', t('gd_debug_fatal').replace('{e}', err.message));
+      gdSheetShowError('', t('gd_debug_fatal').replace('{e}', err.message));
     }
   } finally {
+    // ── 统一收尾：任何情况都离开 searching 状态 ──
+    if (fatalAuth) {
+      gdSearchState = 'error';
+      gdDebug('state', t('gd_debug_authfail_state'));
+    } else if (gdAbort) {
+      gdRows.forEach(r => { if (r.status === 'searching') { r.status = 'none'; r.cands = []; } });
+      if (gdSearchState !== 'error') gdSearchState = 'cancelled';
+      gdDebug('state', t('gd_debug_cancelled'));
+    } else if (gdSearchState === 'searching') {
+      gdSearchState = 'success';   // 成功 / 部分成功都算 success（UI 用统计体现）
+      gdDebug('state', t('gd_debug_done').replace('{o}', gdDebugCounts.ok).replace('{m}', gdDebugCounts.miss).replace('{f}', gdDebugCounts.fail));
+    }
     gdSheetRunning = false;
+    if (gdAbortCtrl) { try { gdAbortCtrl.abort(); } catch (_) {} gdAbortCtrl = null; }
+    gdSearchTimers.forEach(t => clearTimeout(t));
+    gdSearchTimers = [];
     document.getElementById('gd-sheet-run').disabled = false;
-    // 中途停止时还没查的行不再挂着"..."，直接标成未找到（用户可逐组重搜）
-    if (gdAbort) gdRows.forEach(r => { if (r.status === 'searching') { r.status = 'none'; r.cands = []; } });
-    // 进度条收起来；停留在结果页，已查到的行保留，可继续挑选加载。
+    document.getElementById('gd-sheet-progress').style.display = 'none';
     // 注意不能把 gdSheetDone 置 true：它表示"已加载到产品列表"，查完只是挑选阶段，
     // 底部按钮必须保持"加载选中图片到产品列表（N 张）"，否则用户就没地方点加载了。
-    document.getElementById('gd-sheet-progress').style.display = 'none';
     gdSheetDone = false;
     gdSheetShowView('review');
     gdSetActiveSteps(4);   // 搜索完成，进入"选图"阶段
@@ -3629,6 +3900,8 @@ async function gdSheetSearch() {
     gdInitThumbObserver();
     gdUpdateSheetStat();
     gdSyncFooter();
+    gdRefreshAuthUI();
+    gdRenderDebug();
   }
 }
 
@@ -3803,11 +4076,13 @@ async function gdRowResearch(ri) {
     row.status = files.length ? 'kw' : 'none';
     row.hitKeyword = files.length ? kw : '';
   } catch (e) {
-    if (e.aborted) { row.researching = false; gdRenderGroup(ri); return; }
-    if (e.status === 401 || e.status === 403) {
-      gdSheetShowError('gd_token_expired', e.message);
+    const err = gdNormErr(e);
+    if (err.aborted) { row.researching = false; gdRenderGroup(ri); return; }
+    if (err.status === 401 || err.status === 403) {
+      gdSheetShowError('gd_token_expired', err.message);
     } else {
-      console.error('Group re-search failed:', ri, e);
+      // 网络/超时/其他：在 UI 提示，不只写 console
+      gdSheetShowError('', t('gd_debug_fail').replace('{q}', (row.sku || row.name || ri)).replace('{e}', err.message));
     }
     row.status = 'none';
     row.hitKeyword = '';
