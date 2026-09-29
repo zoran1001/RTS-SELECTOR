@@ -908,6 +908,26 @@ input[type="checkbox"] {
 }
 .gd-link-line.bad { color: var(--gm-yellow); }
 .gd-link-line .gd-ll-ic { flex: 0 0 auto; }
+.gd-link-line.local { color: var(--gm-text-2); }
+.gd-link-line .gd-ll-tag {
+  flex: 0 0 auto; font-family: var(--font-ui); font-size: 10px; line-height: 16px;
+  padding: 0 6px; border-radius: 4px; color: var(--gm-green);
+  background: rgba(62, 207, 142, .12); border: 1px solid rgba(62, 207, 142, .3);
+}
+/* ── 本地图片文件夹面板（Step 2，仅在表格含本地路径时出现） ── */
+.gd-local-panel {
+  margin-top: 12px; padding: 12px 16px;
+  border: 1px dashed var(--gm-border-2); border-radius: 8px; background: var(--gm-card);
+}
+.gd-local-head { display: flex; align-items: center; gap: 12px; }
+.gd-local-ic { font-size: 16px; flex: 0 0 auto; }
+.gd-local-meta { flex: 1 1 auto; min-width: 0; }
+.gd-local-title { font-size: 12px; font-weight: 600; color: var(--gm-text); }
+.gd-local-state { font-size: 11px; color: var(--gm-text-3); margin-top: 3px; line-height: 1.5; }
+.gd-local-state.ok { color: var(--gm-green); }
+.gd-local-state.warn { color: var(--gm-yellow); }
+.gd-local-tip { font-size: 11px; color: var(--gm-text-3); margin-top: 8px; line-height: 1.6; }
+
 .gd-data-warn {
   display: none; align-items: flex-start; gap: 8px;
   margin-bottom: 16px; padding: 8px 12px;
@@ -1241,6 +1261,24 @@ input[type="checkbox"] {
       <section class="gd-view" id="gd-view-2">
         <h2 class="gd-s-title" id="gd-load-title">加载 Google Drive 图片</h2>
         <p class="gd-s-sub" id="gd-load-sub"></p>
+
+        <!-- 本地图片文件夹：Excel「本地路径」列的取图方式，与 Google Drive 平级，无需登录。
+             浏览器安全模型要求用户点一次按钮授权文件夹，授权后可递归索引并按相对路径匹配。 -->
+        <div class="gd-local-panel" id="gd-local-panel">
+          <div class="gd-local-head">
+            <span class="gd-local-ic">📁</span>
+            <div class="gd-local-meta">
+              <div class="gd-local-title" id="gd-local-title">本地图片文件夹（可选）</div>
+              <div class="gd-local-state" id="gd-local-state"></div>
+            </div>
+            <button type="button" class="gd-mini-btn" id="gd-local-dir-btn" onclick="gdLocalBtnClick()">选择文件夹</button>
+          </div>
+          <div class="gd-local-tip" id="gd-local-tip"></div>
+        </div>
+        <!-- webkitdirectory 兜底：不支持 FileSystemDirectoryHandle 的浏览器走这条 -->
+        <input type="file" id="gd-local-dir-input" webkitdirectory directory multiple
+          style="display:none" onchange="gdLocalInputChange(this)">
+
         <div class="gd-toolbar">
           <input type="text" id="gd-prod-filter" placeholder="搜索 SKU 或产品名称">
           <button type="button" class="gd-mini-btn" id="gd-retry-all-btn" onclick="gdRetryAll()">重试失败项</button>
@@ -1868,6 +1906,26 @@ const translations = {
     'gd_link_none': '未配置图片',
     'gd_retry_all': '重试失败项',
     'gd_retry_product': '重试本产品',
+    // ── 本地图片路径（LOCAL 列）：与 Google Drive 平级，无需登录 ──
+    'gd_local_tag': '本地',
+    'gd_local_title': '本地图片文件夹（可选）',
+    'gd_local_tip': '表格里「本地路径」列填的是相对路径或文件名时，选中图片文件夹即可离线取图；浏览器只会在你点按钮后读取一次。',
+    'gd_local_btn_choose': '选择文件夹',
+    'gd_local_btn_rechoose': '重新选择文件夹',
+    'gd_local_btn_grant': '授权访问「{name}」',
+    'gd_local_indexing': '正在索引文件夹…',
+    'gd_local_state_none': '未选择文件夹；表格里的本地路径暂时无法读取',
+    'gd_local_state_prompt': '已记住「{name}」，点右侧按钮授权本次访问',
+    'gd_local_state_ok': '已连接「{name}」· 共 {n} 个文件',
+    'gd_local_pick_fail': '选择文件夹失败',
+    'gd_local_loading': '正在读取本地图片…',
+    'gd_local_no_dir': '尚未选择本地图片文件夹',
+    'gd_local_missing': '文件夹里找不到：{path}',
+    'gd_local_need_dir': '表格中存在本地路径，请先在「加载图片」步骤选择本地图片文件夹',
+    'gd_debug_local_ok': '本地文件夹已索引：{name}（{n} 个文件）',
+    'gd_debug_local_pick_ok': '本地文件夹已连接：{name}（{n} 个文件）',
+    'gd_debug_local_pic_ok': '本地图片读取成功：{name}',
+    'gd_debug_local_missing': '本地图片未找到：{path}',
     // Excel 行警告 + 启动校验：只提示 / 标记，不阻断
     'gd_data_issues': '{n} 条数据需要检查（点开查看详情）',
     'gd_row_empty_sku': '第 {row} 行 SKU 为空，已跳过',
@@ -2097,6 +2155,26 @@ const translations = {
     'gd_link_none': 'No image configured',
     'gd_retry_all': 'Retry failed',
     'gd_retry_product': 'Retry product',
+    // ── Local image paths (LOCAL column): same level as Google Drive, no sign-in ──
+    'gd_local_tag': 'Local',
+    'gd_local_title': 'Local image folder (optional)',
+    'gd_local_tip': 'If the "Local path" column holds relative paths or file names, pick the image folder to load them offline. The browser reads it only after you click the button.',
+    'gd_local_btn_choose': 'Choose folder',
+    'gd_local_btn_rechoose': 'Choose another folder',
+    'gd_local_btn_grant': 'Grant access to "{name}"',
+    'gd_local_indexing': 'Indexing folder…',
+    'gd_local_state_none': 'No folder selected — local paths in the table cannot be read yet',
+    'gd_local_state_prompt': 'Remembered "{name}" — click the button to grant access',
+    'gd_local_state_ok': 'Connected to "{name}" · {n} files',
+    'gd_local_pick_fail': 'Failed to choose folder',
+    'gd_local_loading': 'Reading local image…',
+    'gd_local_no_dir': 'No local image folder selected yet',
+    'gd_local_missing': 'Not found in folder: {path}',
+    'gd_local_need_dir': 'The table contains local paths — pick the local image folder in the "Load images" step first',
+    'gd_debug_local_ok': 'Local folder indexed: {name} ({n} files)',
+    'gd_debug_local_pick_ok': 'Local folder connected: {name} ({n} files)',
+    'gd_debug_local_pic_ok': 'Local image loaded: {name}',
+    'gd_debug_local_missing': 'Local image not found: {path}',
     // Excel row warnings + startup validation: warned/marked only, never blocks
     'gd_data_issues': '{n} item(s) need attention (click for details)',
     'gd_row_empty_sku': 'Row {row}: SKU is empty — skipped',
@@ -2275,6 +2353,9 @@ function applyTranslations() {
   setText('#gd-list-title', t('gd_list_title'));
   setText('#gd-load-title', t('gd_load_title'));
   setText('#gd-load-sub', t('gd_load_sub'));
+  setText('#gd-local-title', t('gd_local_title'));
+  setText('#gd-local-tip', t('gd_local_tip'));
+  gdRenderLocalState();   // 本地文件夹面板文案随语言、授权状态一起刷新
   setText('#gd-pick-title', t('gd_pick_title'));
   setText('#gd-retry-all-btn', t('gd_retry_all'));
   setText('#gd-help-toggle', t('gd_login_help'));
@@ -3112,6 +3193,12 @@ const gdState = {
   dataError: null,
   dataWarnings: [],           // 解析期警告：[{type:'empty_sku'|'dup_sku', row, sku?}]
   dataRunId: 0,               // 每次重新加载 +1，作废更早的异步结果（防旧结果晚到覆盖新状态）
+  // 本地图片文件夹（Excel LOCAL 列的根目录；浏览器安全模型要求用户点按钮授权一次）
+  // support: 浏览器是否支持文件夹选择器；dirHandle: FileSystemDirectoryHandle（记忆在 IndexedDB）
+  // dirIndex: { byRel: Map(相对路径小写 → handle/File), byBase: Map(文件名小写 → [条目]) }
+  // perm: 'none'（没选过）| 'granted'（本次可读）| 'prompt'（记住了但本次要重新授权）
+  local: { support: typeof window.showDirectoryPicker === 'function', handle: null, name: '',
+           dirIndex: null, fileCount: 0, perm: 'none', indexing: false },
   linksLoading: new Set(),    // 正在取图的产品下标（只用于禁用该卡按钮）
   // 取消 / 计时
   controller: null,           // 弹窗级 AbortController：停止/关窗时中止一切在途请求
@@ -3175,14 +3262,26 @@ function gdRevokeUrl(url) {
   gdObjectUrls.delete(url);
 }
 // 释放全部临时网址，并清掉候选对象上的旧引用，防止内存只涨不跌
+// 例外：本地文件候选的 blob/file 是用户授权文件夹里的真实文件（不耗网络），予以保留，
+// 关窗只吊销它的预览网址，开窗时用保留的 blob 重新建网址即可
 function gdRevokeAllUrls() {
   gdObjectUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (_) {} });
   gdObjectUrls.clear();
   (gdState.products || []).forEach(p => (p.cands || []).forEach(c => {
     c.objUrl = '';
+    if (c.source === 'local') return;
     c.thumbUrl2 = '';
     c.thumbBlobTried = false;
     c.blob = null;
+  }));
+}
+
+// 开窗/重连后给本地候选图重建预览网址（blob 一直在内存里，零网络）
+function gdRebuildLocalUrls() {
+  (gdState.products || []).forEach(p => (p.cands || []).forEach(c => {
+    if (c.source === 'local' && c.blob && !c.objUrl) {
+      c.objUrl = gdTrackUrl(URL.createObjectURL(c.blob));
+    }
   }));
 }
 
@@ -3697,6 +3796,12 @@ function gdNormalizeLinks(v) {
   return raw.split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
 }
 
+// 本地路径拆分：只认换行 / 逗号 / 分号——Windows 路径和文件夹名里允许有空格，绝不能按空格切
+function gdNormalizeLocalPaths(v) {
+  const raw = Array.isArray(v) ? v.join('\n') : String(v == null ? '' : v);
+  return raw.split(/\r\n|\r|\n|[,;]/).map(s => s.trim()).filter(Boolean);
+}
+
 // SheetJS 兜底加载：正常情况 HTML 里的 <script> 已加载好；CDN 慢/失败时在这里补一次
 async function gdEnsureSheetJS() {
   if (window.XLSX) return;
@@ -3776,8 +3881,16 @@ function parseProductWorkbook(arrayBuffer) {
   const header = Array.isArray(aoa[0]) ? aoa[0].map(norm) : [];
   const colSku = header.indexOf('sku');
   if (colSku < 0) throw { code: 'no_sku_col' };   // SKU 列是硬要求
-  // NAME / LINK 列允许缺失：整列按空处理（需求允许继续，图片状态显示未配置）
-  const cols = { colSku, colName: header.indexOf('name'), colLink: header.indexOf('link') };
+  // NAME / LINK / LOCAL 列允许缺失：整列按空处理（需求允许继续，图片状态显示未配置）
+  // LOCAL（本地路径）接受常见中英表头写法，位置只要在表头里叫这个名字即可
+  const LOCAL_HEADERS = ['local', 'localpath', 'local path', '本地', '本地路径', '本地图片', '本地图片路径', '本地图', '本地文件'];
+  const findCol = names => header.findIndex(h => names.includes(h));
+  const cols = {
+    colSku,
+    colName: findCol(['name']),
+    colLink: findCol(['link', 'links', 'google drive', 'drive', '云盘链接', '谷歌链接']),
+    colLocal: findCol(LOCAL_HEADERS)
+  };
   return normalizeProductRows(aoa.slice(1), cols);
 }
 
@@ -3795,31 +3908,43 @@ function normalizeProductRows(aoa, cols) {
     if (!sku) { warnings.push({ type: 'empty_sku', row: rowNo }); return; }
     const name = cols.colName >= 0 ? String(r[cols.colName] == null ? '' : r[cols.colName]).trim() : '';
     const links = cols.colLink >= 0 ? gdNormalizeLinks(r[cols.colLink]) : [];
+    const localPaths = cols.colLocal >= 0 ? gdNormalizeLocalPaths(r[cols.colLocal]) : [];
     if (seen.has(gdSkuKey(sku))) warnings.push({ type: 'dup_sku', row: rowNo, sku });
     seen.add(gdSkuKey(sku));
-    rows.push({ sku, name, links });
+    rows.push({ sku, name, links, localPaths });
   });
   return { rows, warnings };
 }
 
-// ④ 规范行 → gdState.products（每个有效 LINK 预生成一个 pending 候选图）
+// ④ 规范行 → gdState.products（LINK 和 LOCAL 各自预生成 pending 候选图，cand.source 区分来源）
 function gdBuildProducts(rows) {
+  const gdBaseCand = () => ({
+    targetId: '', targetResourceKey: '', note: '', mimeType: '', picked: false,
+    status: 'pending', blob: null, objUrl: '', thumbUrl: '', thumbUrl2: '',
+    thumbBlobTried: false, errorMsg: ''
+  });
   gdState.products = (rows || []).map((row, i) => {
     const badLinks = [];
     const cands = [];
+    // Google Drive 链接：先认 fileId，认不出的只标记
     row.links.forEach(tok => {
       const id = gdExtractFileId(tok);
-      if (!id) { badLinks.push(tok); return; } // 认不出的链接只标记，不发请求
-      cands.push({
-        id, resourceKey: gdExtractResourceKey(tok),
-        targetId: '', targetResourceKey: '', note: '',
-        name: id, mimeType: '', picked: false,
-        status: 'pending', blob: null, objUrl: '', thumbUrl: '', errorMsg: ''
-      });
+      if (!id) { badLinks.push(tok); return; }
+      cands.push(Object.assign(gdBaseCand(), {
+        source: 'drive', id, localPath: '', file: null,
+        resourceKey: gdExtractResourceKey(tok), name: id
+      }));
+    });
+    // 本地路径：任意非空字符串都是有效配置（文件找不找得到是第 2 步连接文件夹后的事）
+    (row.localPaths || []).forEach(tok => {
+      cands.push(Object.assign(gdBaseCand(), {
+        source: 'local', id: 'local::' + tok.toLowerCase().replace(/\\/g, '/'),
+        localPath: tok, file: null, resourceKey: '', name: tok.split(/[\\/]/).pop()
+      }));
     });
     return {
       id: 'p' + i, sku: row.sku, name: row.name,
-      links: row.links.slice(), badLinks, cands,
+      links: row.links.slice(), localPaths: (row.localPaths || []).slice(), badLinks, cands,
       issues: { dupSku: false, noName: false, noLink: false, dupIds: [] }
     };
   });
@@ -3838,8 +3963,10 @@ function gdApplyProductRows(rows, warnings) {
   gdRenderDataStatus();
   gdRenderAllViews();
   gdUpdateActionState();
+  gdRenderLocalState();   // 数据变了：本地路径面板可能该显示/隐藏
   const open = gdEl('gdModal') && !gdEl('gdModal').classList.contains('hidden');
-  if (open && gdHasValidToken() && gdState.uiStep === 2) gdAutoLoad();
+  // gdAutoLoad 内部自己分流：本地图不需要登录，Drive 图才需要 token
+  if (open && gdState.uiStep === 2) gdAutoLoad();
   gdDebug('info', t('gd_debug_products_loaded').replace('{n}', gdState.products.length));
 }
 
@@ -3886,7 +4013,7 @@ function gdValidateProducts() {
   const skuSeen = new Map();
   const idSeen = new Map();
   gdState.products.forEach(p => {
-    p.issues = { dupSku: false, noName: !p.name, noLink: p.links.length === 0, dupIds: [] };
+    p.issues = { dupSku: false, noName: !p.name, noLink: p.cands.length === 0, dupIds: [] };
   });
   gdState.products.forEach(p => {
     const key = gdSkuKey(p.sku);
@@ -3923,19 +4050,29 @@ function gdIssueTexts(p) {
 function gdListCardHTML(i) {
   const p = gdState.products[i];
   const ready = p.cands.length > 0;
-  const lines = p.links.length
-    ? p.links.map(l => {
-        const ok = !!gdExtractFileId(l);
-        return `<div class="gd-link-line${ok ? '' : ' bad'}"><span class="gd-ll-ic">${ok ? '✓' : '⚠'}</span><span>${gdEscape(l)}</span></div>`;
-      }).join('')
+  const nDrive = p.cands.filter(c => c.source !== 'local').length;
+  const nLocal = p.cands.length - nDrive;
+  // 明细行：Google 链接认 fileId 打勾/警告；本地路径统一打「本地」标签
+  const driveLines = p.links.map(l => {
+    const ok = !!gdExtractFileId(l);
+    return `<div class="gd-link-line${ok ? '' : ' bad'}"><span class="gd-ll-ic">${ok ? '✓' : '⚠'}</span><span>${gdEscape(l)}</span></div>`;
+  });
+  const localLines = (p.localPaths || []).map(l =>
+    `<div class="gd-link-line local"><span class="gd-ll-tag">${gdEscape(t('gd_local_tag'))}</span><span>${gdEscape(l)}</span></div>`);
+  const lines = (driveLines.length + localLines.length)
+    ? driveLines.concat(localLines).join('')
     : `<div class="gd-link-line bad"><span class="gd-ll-ic">⚠</span><span>${gdEscape(t('gd_issue_no_link'))}</span></div>`;
+  const statusTxt = ready
+    ? t('gd_link_ready').replace('{n}', p.cands.length)
+        + (nLocal ? '（' + t('gd_local_tag') + ' ' + nLocal + (nDrive ? ' / Drive ' + nDrive : '') + '）' : '')
+    : t('gd_link_none');
   const issues = gdIssueTexts(p);
   return `<div class="gd-pcard" data-i="${i}">
     <div class="gd-lcard-head">
       <span class="gd-pcard-idx">#${i + 1}</span>
       <span class="gd-pcard-sku">${gdEscape(p.sku)}</span>
       ${p.name ? `<span class="gd-pcard-name">${gdEscape(p.name)}</span>` : ''}
-      <span class="gd-lstatus${ready ? '' : ' off'}"><span class="gd-ldot"></span>${ready ? gdEscape(t('gd_link_ready').replace('{n}', p.cands.length)) : gdEscape(t('gd_link_none'))}</span>
+      <span class="gd-lstatus${ready ? '' : ' off'}"><span class="gd-ldot"></span>${gdEscape(statusTxt)}</span>
       <span class="gd-lcard-acts">
         <button type="button" class="gd-mini-btn" onclick="gdToggleLinks(${i})">${gdEscape(t('gd_view_links'))}</button>
       </span>
@@ -4050,8 +4187,8 @@ function gdGoStep(n) {
   const bodyEl = document.querySelector('#gdModal .gd-body');
   if (bodyEl) bodyEl.scrollTop = 0;
   gdSetActiveSteps(n);
-  // 进入第 2 步：刷新卡片并自动后台读缩略图；第 3 步重画选图；第 4 步画确认/完成页
-  if (n === 2) { gdRenderLoadView(); if (gdHasValidToken()) gdAutoLoad(); }
+  // 进入第 2 步：刷新卡片并自动后台取图（gdAutoLoad 内部分流：本地图免登录，Drive 图要登录）
+  if (n === 2) { gdRenderLoadView(); gdAutoLoad(); }
   if (n === 3) gdRenderPickView();
   if (n === 4) gdRenderStep4();
   if (bodyEl) bodyEl.scrollTop = 0; // 渲染后再归一次零，双保险
@@ -4067,6 +4204,11 @@ function gdBack() {
 // 底部右侧主按钮：纯翻页（产品数据打开时已就位）
 function gdNext() {
   if (gdState.phase === 'importing' || gdState.phase === 'success') return;
+  // 第 2 步前进前：若表格里有本地路径但还没授权文件夹，明确提示（不硬拦，用户可能只想用 Drive 图）
+  if (gdState.uiStep === 2) {
+    const hasLocal = gdState.products.some(p => (p.localPaths || []).length);
+    if (hasLocal && !gdState.local.dirIndex) gdSheetShowError('gd_local_need_dir');
+  }
   if (gdState.uiStep < 4) gdGoStep(gdState.uiStep + 1);
 }
 
@@ -4150,10 +4292,12 @@ function gdUpdateActionState() {
   } else if (s === 2 || s === 3) {
     importBtn.textContent = t('gd_next');
   } else {
-    // 第 4 步准备态：确认统计后正式下载选中原图并加载
-    const n = gdSheetPickedCount();
+    // 第 4 步准备态：确认统计后正式下载选中原图并加载（纯本地图不要求 Google 登录）
+    const pickedList = gdSheetPickedList();
+    const n = pickedList.length;
+    const needTok = pickedList.some(c => c.source !== 'local');
     importBtn.textContent = t('gd_load_picked').replace('{n}', n);
-    importBtn.disabled = n <= 0 || !gdHasValidToken();
+    importBtn.disabled = n <= 0 || (needTok && !gdHasValidToken());
     importBtn.onclick = gdSheetImport;
   }
 }
@@ -4227,12 +4371,289 @@ function gdAbortAll() {
 // ═══════════════════════════════════════════════════════
 let gdAutoRunId = 0;   // 每次自动加载一个新代次，旧代次的结果直接丢弃
 
+// ════════════════════════════════════════════════════════════════
+//  本地图片文件夹（Excel LOCAL 列的取图方式，和 Google Drive 平级，无需登录）
+//  浏览器安全规矩：网页不能直接读 C:\... 任意路径，必须用户点按钮授权一个文件夹；
+//  授权后工具递归索引，Excel 里填相对路径（或只填文件名）都能匹配到。
+//  FileSystemDirectoryHandle 可存进 IndexedDB，下次打开只需点一下「授权访问」。
+// ════════════════════════════════════════════════════════════════
+const GD_LOCAL_IDB = 'gd-tool-local';
+function gdIDBReq() {
+  return new Promise((resolve, reject) => {
+    const r = indexedDB.open(GD_LOCAL_IDB, 1);
+    r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('kv')) r.result.createObjectStore('kv'); };
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+async function gdIDBSet(k, v) {
+  try {
+    const db = await gdIDBReq();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(v, k);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (_) { /* 记忆功能失败不影响主流程 */ }
+}
+async function gdIDBGet(k) {
+  try {
+    const db = await gdIDBReq();
+    const v = await new Promise((resolve, reject) => {
+      const rq = db.transaction('kv').objectStore('kv').get(k);
+      rq.onsuccess = () => resolve(rq.result); rq.onerror = () => reject(rq.error);
+    });
+    db.close();
+    return v || null;
+  } catch (_) { return null; }
+}
+
+// 路径归一：反斜杠转正斜杠、去 "./"、去盘符、去首尾空白；匹配键一律小写
+function gdNormLocalKey(tok) {
+  let s = String(tok == null ? '' : tok).trim().replace(/\\/g, '/');
+  s = s.replace(/^\.\//, '').replace(/^\/+/, '');
+  s = s.replace(/^[A-Za-z]:\//, '');   // 用户贴了 E:\xxx\a.png 也能在授权文件夹内按尾部匹配
+  return s.toLowerCase();
+}
+
+// 递归索引：byRel = 相对路径 → 条目；byBase = 纯文件名 → 同名条目数组（只填文件名时兜底）
+async function gdBuildLocalIndex(rootHandle) {
+  const byRel = new Map(), byBase = new Map();
+  const put = (rel, h) => {
+    const key = rel.toLowerCase();
+    if (!byRel.has(key)) byRel.set(key, { rel: key, h });
+    const base = key.split('/').pop();
+    if (!byBase.has(base)) byBase.set(base, []);
+    const arr = byBase.get(base);
+    if (!arr.some(e => e.rel === key)) arr.push({ rel: key, h });
+  };
+  const walk = async (dir, prefix) => {
+    for await (const [name, h] of dir.entries()) {
+      const rel = prefix ? prefix + '/' + name : name;
+      if (h.kind === 'file') put(rel, h);
+      else if (h.kind === 'directory') await walk(h, rel);
+    }
+  };
+  await walk(rootHandle, '');
+  return { byRel, byBase, count: byRel.size };
+}
+
+// webkitdirectory 兜底：从 input.files 建索引（这种浏览器没法持久记忆文件夹）
+function gdBuildLocalIndexFromFiles(fileList) {
+  const byRel = new Map(), byBase = new Map();
+  const put = (rel, f) => {
+    const key = rel.toLowerCase();
+    if (!byRel.has(key)) byRel.set(key, { rel: key, h: f });
+    const base = key.split('/').pop();
+    if (!byBase.has(base)) byBase.set(base, []);
+    const arr = byBase.get(base);
+    if (!arr.some(e => e.rel === key)) arr.push({ rel: key, h: f });
+  };
+  Array.from(fileList || []).forEach(f => {
+    const full = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
+    put(full, f);                              // 含选择目录名的完整相对路径
+    const stripped = full.split('/').slice(1).join('/');
+    if (stripped) put(stripped, f);            // 去掉选择目录名（Excel 常见写法）
+    put(f.name, f);                            // 纯文件名
+  });
+  return { byRel, byBase, count: (fileList || []).length };
+}
+
+// 按 Excel 里写的路径在索引里找文件：① 精确相对路径 ② 同名唯一 ③ 同名时按路径尾部消歧
+async function gdResolveLocalFile(tok) {
+  const idx = gdState.local.dirIndex;
+  if (!idx) return { error: 'no_dir' };
+  const key = gdNormLocalKey(tok);
+  if (!key) return { error: 'missing' };
+  let entry = idx.byRel.get(key);
+  if (!entry) {
+    const arr = idx.byBase.get(key.split('/').pop()) || [];
+    if (arr.length === 1) entry = arr[0];
+    else if (arr.length > 1) entry = arr.find(e => e.rel === key || e.rel.endsWith('/' + key)) || null;
+  }
+  if (!entry) return { error: 'missing', key };
+  try {
+    const file = typeof entry.h.getFile === 'function' ? await entry.h.getFile() : entry.h;
+    return { file, rel: entry.rel };
+  } catch (_) {
+    return { error: 'missing', key };
+  }
+}
+
+// 文件夹连接成功后的统一落地：建索引 → 渲染状态 → 自动加载本地候选图
+async function gdAdoptLocalHandle(handle, remember) {
+  const L = gdState.local;
+  L.indexing = true; gdRenderLocalState();
+  const idx = await gdBuildLocalIndex(handle);
+  L.handle = handle; L.name = handle.name || '';
+  L.dirIndex = idx; L.fileCount = idx.count;
+  L.perm = 'granted'; L.indexing = false;
+  if (remember) await gdIDBSet('local_dir_handle_v1', handle);
+  gdRenderLocalState();
+  gdDebug('info', t('gd_debug_local_pick_ok').replace('{name}', L.name).replace('{n}', L.fileCount));
+  gdKickLocalLoad();
+}
+
+function gdAdoptLocalFiles(fileList) {
+  const L = gdState.local;
+  const first = (fileList[0] && fileList[0].webkitRelativePath) || '';
+  L.handle = null;
+  L.name = first ? first.split('/')[0] : '';
+  L.dirIndex = gdBuildLocalIndexFromFiles(fileList);
+  L.fileCount = fileList.length;
+  L.perm = 'granted'; L.indexing = false;
+  gdRenderLocalState();
+  gdDebug('info', t('gd_debug_local_pick_ok').replace('{name}', L.name || '-').replace('{n}', L.fileCount));
+  gdKickLocalLoad();
+}
+
+// 文件夹就绪后：把本地候选重新排队（弹窗开着才需要动 UI）
+function gdKickLocalLoad() {
+  gdSheetClearError();   // 选好文件夹了，"请先选文件夹"之类的提示可以撤掉
+  const open = gdEl('gdModal') && !gdEl('gdModal').classList.contains('hidden');
+  if (!open) return;
+  gdState.products.forEach(p => p.cands.forEach(c => {
+    if (c.source === 'local' && c.status === 'error') { c.status = 'pending'; c.errorMsg = ''; }
+  }));
+  gdAutoRunId++;
+  gdAutoLoad();
+}
+
+// 按钮：未选过 → 弹文件夹选择器；记住了但本次没授权 → 在点击手势里申请授权；不支持的浏览器走文件选择框
+async function gdLocalBtnClick() {
+  const L = gdState.local;
+  if (L.indexing) return;
+  try {
+    if (L.support && L.handle && L.perm !== 'granted') {
+      const perm = await L.handle.requestPermission({ mode: 'read' });
+      if (perm === 'granted') { await gdAdoptLocalHandle(L.handle, false); return; }
+    }
+    if (L.support) {
+      const handle = await window.showDirectoryPicker({ mode: 'read' });
+      await gdAdoptLocalHandle(handle, true);
+    } else {
+      const inp = gdEl('gd-local-dir-input');
+      if (inp) inp.click();
+    }
+  } catch (e) {
+    if (e && (e.name === 'AbortError' || e.name === 'SecurityError')) return; // 用户自己取消
+    gdDebug('warn', t('gd_local_pick_fail') + '：' + ((e && e.message) || e));
+  }
+}
+
+// webkitdirectory 兜底选择框的 change 处理：直接用 input.files 建索引
+function gdLocalInputChange(inp) {
+  const files = inp && inp.files;
+  if (!files || !files.length) return;
+  gdAdoptLocalFiles(files);
+  try { inp.value = ''; } catch (_) {}   // 允许重复选同一目录
+}
+
+// 启动时尝试取回上次记住的文件夹；没授权不弹窗打扰，只显示「点此授权」
+async function gdRestoreLocalDir() {
+  if (!gdState.local.support) { gdRenderLocalState(); return; }
+  const handle = await gdIDBGet('local_dir_handle_v1');
+  if (!handle || typeof handle.queryPermission !== 'function') { gdRenderLocalState(); return; }
+  const L = gdState.local;
+  L.handle = handle; L.name = handle.name || '';
+  let perm = 'prompt';
+  try { perm = await handle.queryPermission({ mode: 'read' }); } catch (_) {}
+  if (perm === 'granted') { await gdAdoptLocalHandle(handle, false); return; }
+  L.perm = 'prompt';
+  gdRenderLocalState();
+}
+
+function gdRenderLocalState() {
+  const btn = gdEl('gd-local-dir-btn'), st = gdEl('gd-local-state');
+  // 面板只在「表格里确实填了本地路径」时出现——没填就没必要让用户选文件夹
+  const panel = gdEl('gd-local-panel');
+  if (panel) {
+    const hasLocal = gdState.products.some(p => (p.localPaths || []).length);
+    panel.style.display = hasLocal ? '' : 'none';
+  }
+  if (!btn || !st) return;
+  const L = gdState.local;
+  if (L.indexing) {
+    btn.disabled = true;
+    btn.textContent = t('gd_local_indexing');
+    st.textContent = '';
+    return;
+  }
+  btn.disabled = false;
+  if (L.perm === 'granted' && L.dirIndex) {
+    btn.textContent = t('gd_local_btn_rechoose');
+    st.textContent = t('gd_local_state_ok').replace('{name}', L.name || '-').replace('{n}', L.fileCount);
+    st.className = 'gd-local-state ok';
+  } else if (L.perm === 'prompt') {
+    btn.textContent = t('gd_local_btn_grant').replace('{name}', L.name || '');
+    st.textContent = t('gd_local_state_prompt').replace('{name}', L.name || '');
+    st.className = 'gd-local-state warn';
+  } else {
+    btn.textContent = t('gd_local_btn_choose');
+    st.textContent = t('gd_local_state_none');
+    st.className = 'gd-local-state';
+  }
+}
+
+// 单张本地图：索引命中 → 校验图片 → 直接用 File 建 blobURL（零网络）
+async function gdLoadLocalCand(p, c) {
+  const rerender = () => {
+    const i = gdState.products.indexOf(p);
+    if (i >= 0 && gdState.controller && !gdState.controller.signal.aborted) gdRenderCardCands(i);
+  };
+  c.status = 'loading';
+  c.note = t('gd_local_loading');
+  rerender();
+
+  if (!gdState.local.dirIndex) {
+    c.status = 'error'; c.note = '';
+    c.errorMsg = t('gd_local_no_dir');
+    gdDebug('warn', t('gd_debug_local_missing').replace('{path}', c.localPath));
+    rerender();
+    return;
+  }
+  if (gdState.controller && gdState.controller.signal.aborted) return;
+  const r = await gdResolveLocalFile(c.localPath);
+  if (gdState.controller && gdState.controller.signal.aborted) return;
+  if (r.error) {
+    c.status = 'error'; c.note = '';
+    c.errorMsg = r.error === 'no_dir' ? t('gd_local_no_dir') : t('gd_local_missing').replace('{path}', c.localPath);
+    gdDebug('warn', t('gd_debug_local_missing').replace('{path}', c.localPath));
+    rerender();
+    return;
+  }
+  const f = r.file;
+  const lower = (f.name || '').toLowerCase();
+  const extOk = GD_OK_EXT.some(e => lower.endsWith('.' + e));
+  if (!extOk && f.type && f.type.indexOf('image/') !== 0) {
+    c.status = 'error'; c.note = '';
+    c.errorMsg = t('gd_link_not_image') + '（' + (f.type || lower.split('.').pop() || '?') + '）';
+    gdDebug('warn', t('gd_debug_not_image').replace('{name}', f.name));
+    rerender();
+    return;
+  }
+  c.file = f;
+  c.blob = f;
+  c.name = f.name;
+  c.mimeType = f.type || '';
+  if (c.objUrl) gdRevokeUrl(c.objUrl);
+  c.objUrl = gdTrackUrl(URL.createObjectURL(f));
+  c.thumbUrl = ''; c.thumbUrl2 = '';
+  c.status = 'ok'; c.errorMsg = ''; c.note = '';
+  gdDebug('link', t('gd_debug_local_pic_ok').replace('{name}', f.name));
+  rerender();
+}
+
 async function gdAutoLoad() {
-  if (!gdHasValidToken() || gdState.phase === 'importing') return;
-  // 收集所有未加载/失败候选；同一个 cand 对象只入队一次
+  if (gdState.phase === 'importing') return;
+  // 本地候选不需要登录；Drive 候选必须有 token。未登录时本地图照常加载，
+  // 收集任务时直接把没登录的 Drive 候选过滤掉
   const jobs = [];
   gdState.products.forEach(p => p.cands.forEach(c => {
-    if (c.status === 'pending' || c.status === 'error') jobs.push({ p, c });
+    if (c.status === 'pending' || c.status === 'error') {
+      if (c.source === 'local' || gdHasValidToken()) jobs.push({ p, c });
+    }
   }));
   if (!jobs.length) { gdRenderCardCandsAll(); gdUpdateLinkStat(); gdUpdateActionState(); return; }
 
@@ -4277,18 +4698,22 @@ function gdRenderCardCandsAll() {
   gdState.products.forEach((p, i) => { gdRenderCardCands(i); gdRenderCardActs(i); });
 }
 
-// 重试单个产品的失败/未加载项
+// 重试单个产品的失败/未加载项（本地图无登录要求；只有 Google 图才拦登录）
 async function gdRetryProduct(i) {
   const p = gdState.products[i];
   if (!p) return;
-  if (!gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); return; }
+  const needLogin = p.cands.some(c =>
+    (c.status === 'error' || c.status === 'pending') && c.source !== 'local');
+  if (needLogin && !gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); return; }
   const hasJob = p.cands.some(c => c.status === 'error' || c.status === 'pending');
   if (hasJob) gdAutoLoad();
 }
 
 // 顶部「重试失败项」：把所有产品的失败候选重新排队
 async function gdRetryAll() {
-  if (!gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); return; }
+  const hasDriveErr = gdState.products.some(p => p.cands.some(c =>
+    c.status === 'error' && c.source !== 'local'));
+  if (hasDriveErr && !gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); return; }
   let n = 0;
   gdState.products.forEach(p => p.cands.forEach(c => {
     if (c.status === 'error') { c.status = 'pending'; c.errorMsg = ''; n++; }
@@ -4302,7 +4727,9 @@ async function gdRetryAll() {
 async function gdThumbImgError(i, ci, imgEl) {
   const p = gdState.products[i];
   const c = p && p.cands[ci];
-  if (!c || c.thumbBlobTried || !imgEl) return;
+  if (!c || !imgEl) return;
+  if (c.source === 'local') { imgEl.closest('.gd-cand')?.classList.add('thumb-fail'); return; }
+  if (c.thumbBlobTried) return;
   c.thumbBlobTried = true;
   try {
     const blob = await gdFetchBlob(c.thumbUrl);
@@ -4324,6 +4751,7 @@ async function gdThumbImgError(i, ci, imgEl) {
 // 原图只在「点开大图」和「最终导入选中图片」时才取（gdFetchFullBlob 兜底）
 // metadata 失败和下载失败严格分开记录，绝不混成一句"无权限"
 async function gdLoadOneCand(p, c) {
+  if (c.source === 'local') return gdLoadLocalCand(p, c);
   const yn = v => v ? 'yes' : 'no';
   const rerender = () => {
     const i = gdState.products.indexOf(p);
@@ -4422,6 +4850,7 @@ async function gdLoadOneCand(p, c) {
 // 需要原图时（点开大图 / 最终导入）才真正下载：命中缓存就不重复拉
 async function gdEnsureFullBlob(p, c) {
   if (c.blob) return c.blob;
+  if (c.source === 'local') { c.blob = c.file; return c.file; }  // 本地文件：重新取一次 File 即可
   const id = c.targetId || c.id;
   const key = c.targetResourceKey || c.resourceKey || '';
   const blob = await gdFileBlob(id, key);
@@ -4493,7 +4922,7 @@ async function gdRetryCand(i, ci) {
   const p = gdState.products[i];
   const c = p && p.cands[ci];
   if (!c || gdState.phase === 'importing') return;
-  if (!gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); return; }
+  if (c.source !== 'local' && !gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); return; }
   c.status = 'loading';
   c.errorMsg = '';
   c.note = '';
@@ -4718,7 +5147,9 @@ async function gdLbRender() {
 async function gdSheetImport() {
   const picked = gdSheetPickedList();
   if (!picked.length || gdState.phase === 'importing') return;
-  if (!gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); gdUpdateActionState(); return; }
+  // 勾选里只要有 Google Drive 图才要求登录；纯本地图片直接导入
+  const needLogin = picked.some(c => c.source !== 'local');
+  if (needLogin && !gdHasValidToken()) { gdSheetShowError('gd_sheet_err_login'); gdUpdateActionState(); return; }
 
   gdState.phase = 'importing';
   gdState.abortFlag = false;
@@ -4839,6 +5270,7 @@ function gdOpen(target) {
   // 已取到的缩略图状态保留（重开不重复请求 Google）；勾选项 / ObjectURL 全部重置
   gdState.products.forEach(p => p.cands.forEach(c => { c.picked = false; }));
   gdRevokeAllUrls();
+  gdRebuildLocalUrls();   // 本地候选图的 File 还在内存里，重开弹窗时重建预览网址（零网络）
   ['gd-list-pcards', 'gd-pcards', 'gd-pick-pcards'].forEach(id => gdSetHTML(id, ''));
   gdSetText('gd-link-stat', '');
   gdSetText('gd-pick-stat', '');
@@ -4858,6 +5290,9 @@ function gdOpen(target) {
   gdRenderListView();
   gdGoStep(1);
   gdRenderDebug();
+  // 取回上次记住的本地图片文件夹：已授权直接索引，未授权只显示「点此授权」，不弹窗打扰
+  gdRenderLocalState();
+  gdRestoreLocalDir();
   if (gdState.dataStatus === 'ok') gdDebug('info', t('gd_debug_products_loaded').replace('{n}', gdState.products.length));
   else if (gdState.dataStatus === 'error') gdDebug('error', t('gd_debug_data_fail'));
 }
